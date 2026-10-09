@@ -56,6 +56,10 @@ and a replacement-aware section (original herd, replacement herd, overlaid). A h
 
 All generated files are written to `outputs/`, which is not tracked.
 
+## License
+
+MIT, see `LICENSE`. Copyright (c) 2026 Sumit Sharma.
+
 ## Notes
 
 - `verify/verify_migration_parity.py` compares against a saved baseline at
