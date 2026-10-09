@@ -31,7 +31,7 @@ import os, sys, json, subprocess, html, re
 # =====================================================================================================================
 # 1. USER SETTINGS
 # =====================================================================================================================
-YEARS = 1                       # projection horizon
+YEARS = 2                       # projection horizon
 ANNUAL_DISCOUNT_FACTOR = 0.95   # value today of 1 US$ received in one year (the discount convention used everywhere in CowMRP)
 N_TRAJECTORIES = 0              # 0 = expected values only. >0 = also simulate that many individual cows (Monte Carlo, slower) and draw
                                 #   10 % - 90 % bands on the cumulative reward ("possible futures" of a single cow)
@@ -52,23 +52,27 @@ OUTPUT_FOLDER = "outputs/projection"
 # dim_days - dp_days must lie in that window; dry-off is at 222 days pregnant; calving at about 277.
 # If a state is impossible you get an error that lists valid choices.
 SCENARIOS = [
+    # >>> ACTIVE: every dict(...) line WITHOUT a leading # is run; put a # in front to switch one off. <<<
+    # 0. Open cow, lactation 2, day 1 in milk, not pregnant, at DAY resolution (698,070 states: takes a few minutes).
+    dict(label="Open cow, lactation 2, DIM 1 (DAY)", time_unit="day", lactation=2, dim_days=1, dp_days=0),
+
     # 1. A new heifer entering the herd (start of lactation 1). The classic "value of a replacement" case.
-    dict(label="New heifer, start of lactation 1 (WEEK)", time_unit="week", lactation=1, dim_days=0, dp_days=0),
+    # dict(label="New heifer, start of lactation 1 (WEEK)", time_unit="week", lactation=1, dim_days=0, dp_days=0),
 
     # 2. An open cow, lactation 2, 150 days in milk. She can still be bred (days 50-300).
-    dict(label="Open cow, lactation 2, DIM 150 (WEEK)", time_unit="week", lactation=2, dim_days=150, dp_days=0),
+    # dict(label="Open cow, lactation 2, DIM 150 (WEEK)", time_unit="week", lactation=2, dim_days=150, dp_days=0),
 
     # 3. The same cow, pregnant 60 days (conceived at DIM 90). Compare with scenario 2 = the value of the pregnancy.
-    dict(label="Same cow, pregnant 60 d (WEEK)", time_unit="week", lactation=2, dim_days=150, dp_days=60),
+    # dict(label="Same cow, pregnant 60 d (WEEK)", time_unit="week", lactation=2, dim_days=150, dp_days=60),
 
     # 4. A dry cow: lactation 3, 230 days pregnant (dried off at 222), 330 days in milk, calving in about 47 days.
-    dict(label="Dry cow, lactation 3, 230 d pregnant (WEEK)", time_unit="week", lactation=3, dim_days=330, dp_days=230),
+    # dict(label="Dry cow, lactation 3, 230 d pregnant (WEEK)", time_unit="week", lactation=3, dim_days=330, dp_days=230),
 
     # 5. The same open cow at MONTH resolution, to see the effect of the time discretization (faster, a bit less exact).
     # dict(label="Open cow, lactation 2, DIM 150 (MONTH)", time_unit="month", lactation=2, dim_days=150, dp_days=0),
 
     # 6. DAY resolution (most exact, slow: 698,070 states).
-    dict(label="Open cow, lactation 2, DIM 150 (DAY)", time_unit="day", lactation=2, dim_days=150, dp_days=0),
+    # dict(label="Open cow, lactation 2, DIM 150 (DAY)", time_unit="day", lactation=2, dim_days=150, dp_days=0),
 
     # 7. State given directly in model steps (WEEK: dim 20 = about day 147; dp 8 = about 56 days pregnant).
     # dict(label="Lactation 4, steps dim=20 dp=8 (WEEK)", time_unit="week", lactation=4, dim=20, dp=8),
@@ -186,6 +190,11 @@ def worker(unit, indices, out_path):
 # =====================================================================================================================
 # 3. FIGURES (Plotly) and tables. No model code here either: it only draws what the workers returned.
 # =====================================================================================================================
+def day_ticks(total_days):
+    """Tick spacing (days) for the time axis: about 8-12 ticks, a multiple of 30 days."""
+    return 30 * max(1, -(-total_days // 300))
+
+
 def slug(s):
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_")[:60]
 
@@ -210,32 +219,33 @@ def make_outputs(results):
     for j, key in enumerate(names):
         money = j < n_money
         unit_txt = "US$" if money else PHYSICAL_QUANTITIES[key].split(", ")[-1]
-        fig = make_subplots(rows=1, cols=2, subplot_titles=(f"Expected {('reward' if money else 'amount')} per day ({unit_txt}/day)",
-                                                            f"Cumulative expected {('discounted ' if money else '')}{('reward, US$' if money else 'amount, ' + unit_txt)}"))
+        fig = make_subplots(rows=1, cols=2, horizontal_spacing=0.09,
+                            subplot_titles=(f"Expected {('reward' if money else 'amount')} per day ({unit_txt}/day)",
+                                            f"Cumulative expected {('discounted ' if money else '')}{('reward, US$' if money else 'amount, ' + unit_txt)}"))
         for si, r in enumerate(ordered):
-            x = np.array(r["t_days"]) / 365.0
+            x = np.array(r["t_days"])
             per_day = np.array(r["exp_per_step"])[:, j] / r["U"]
             cum = np.array(r["cum"])[:, j]
             c = colors[si % len(colors)]
             fig.add_trace(go.Scatter(x=x, y=per_day, mode="lines", name=r["label"], legendgroup=str(si), line=dict(color=c, width=2),
-                                     hovertemplate="year %{x:.2f}<br>%{y:.3f}<extra>" + r["label"] + "</extra>"), row=1, col=1)
+                                     hovertemplate="day %{x:.0f}<br>%{y:.3f}<extra>" + r["label"] + "</extra>"), row=1, col=1)
             if "mc" in r:
                 fig.add_trace(go.Scatter(x=np.r_[x, x[::-1]], y=np.r_[np.array(r["mc"]["p90"])[:, j], np.array(r["mc"]["p10"])[::-1, j]], fill="toself", fillcolor=c, opacity=0.15,
                                          line=dict(width=0), name=f"{r['label']}: 10-90 % of {r['mc']['n']} simulated cows", legendgroup=str(si), hoverinfo="skip"), row=1, col=2)
             fig.add_trace(go.Scatter(x=x, y=cum, mode="lines", name=r["label"], legendgroup=str(si), showlegend=False, line=dict(color=c, width=2),
-                                     hovertemplate="year %{x:.2f}<br>%{y:,.0f}<extra>" + r["label"] + "</extra>"), row=1, col=2)
-        fig.update_xaxes(title_text="years from now")
-        fig.update_layout(template="plotly_white", title=dict(text=f"{nice.get(key, key)} over time", x=0.01), height=520, legend=dict(orientation="h", y=-0.25),
-                          margin=dict(l=60, r=20, t=80, b=40))
+                                     hovertemplate="day %{x:.0f}<br>%{y:,.0f}<extra>" + r["label"] + "</extra>"), row=1, col=2)
+        fig.update_xaxes(title_text="days from now", title_standoff=8, dtick=day_ticks(YEARS * 365), tick0=0, tickangle=0)
+        fig.update_layout(template="plotly_white", title=dict(text=f"{nice.get(key, key)} over time", x=0.01), height=520,
+                          legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="left", x=0), margin=dict(l=70, r=30, t=90, b=120))
         cap = (f"{nice.get(key, key)}. Left: expected amount per day at each future time, from the model's own transition and reward vectors "
                f"(a cow that is culled or dies is replaced by a heifer, whose cost and future income are included). "
                + ("Right: running total, discounted at " + f"{ANNUAL_DISCOUNT_FACTOR} per year" + (" (shaded: 10-90 % of simulated individual cows)." if N_TRAJECTORIES else ".") if money else "Right: running total, not discounted."))
         figs.append((f"reward_{key}", nice.get(key, key), cap, fig))
     # distribution figures
     for r in ordered:
-        x = np.array(r["t_days"]) / 365.0
-        fig = make_subplots(rows=2, cols=2, subplot_titles=("Reproductive status", "Lactation number", "Days in milk (probability by 30-day bin)", "Is the original cow still in the herd?"),
-                            specs=[[{}, {}], [{}, {}]], vertical_spacing=0.16)
+        x = np.array(r["t_days"])
+        fig = make_subplots(rows=1, cols=4, horizontal_spacing=0.065,
+                            subplot_titles=("Reproductive status", "Lactation number", "Days in milk (30-day bins)", "Original cow still in herd?"))
         st = np.array(r["status"])
         for k, (nm, col) in enumerate((("Open", "#1f77b4"), ("Pregnant", "#2ca02c"), ("Dry", "#ff7f0e"))):
             fig.add_trace(go.Scatter(x=x, y=st[:, k], mode="lines", stackgroup="s", name=nm, line=dict(color=col, width=0.5)), row=1, col=1)
@@ -246,18 +256,19 @@ def make_outputs(results):
                 fig.add_trace(go.Scatter(x=x, y=ls[:, L], mode="lines", stackgroup="l", name=f"lactation {L + 1}", line=dict(width=0.5, color=sample_colorscale("Viridis", L / max(ls.shape[1] - 1, 1))[0])), row=1, col=2)
         dd = np.array(r["dim_bins"])
         nb = int(np.argmax(dd.sum(axis=0) < 1e-6)) or dd.shape[1]
-        fig.add_trace(go.Heatmap(z=dd[:, :nb].T, x=x, y=np.arange(nb) * 30 + 15, colorscale="Viridis", colorbar=dict(title="probability", len=0.4, y=0.2), zmin=0), row=2, col=1)
+        fig.add_trace(go.Heatmap(z=dd[:, :nb].T, x=x, y=np.arange(nb) * 30 + 15, colorscale="Viridis", colorbar=dict(title=dict(text="prob.", side="top"), len=0.5, thickness=10, x=0.742, y=0.5), zmin=0), row=1, col=3)
         orig = np.array(r["original_still_here"])
-        fig.add_trace(go.Scatter(x=x, y=orig, mode="lines", name="original cow still in herd", line=dict(color="#d62728", width=2)), row=2, col=2)
-        fig.add_trace(go.Scatter(x=x, y=1 - orig, mode="lines", name="replaced by a heifer at least once", line=dict(color="#9467bd", width=2)), row=2, col=2)
-        fig.update_xaxes(title_text="years from now")
+        fig.add_trace(go.Scatter(x=x, y=orig, mode="lines", name="original cow still in herd", line=dict(color="#d62728", width=2)), row=1, col=4)
+        fig.add_trace(go.Scatter(x=x, y=1 - orig, mode="lines", name="replaced by a heifer at least once", line=dict(color="#9467bd", width=2)), row=1, col=4)
+        fig.update_xaxes(title_text="days from now", title_standoff=8, dtick=day_ticks(YEARS * 365), tick0=0, tickangle=0)
         fig.update_yaxes(title_text="probability", row=1, col=1); fig.update_yaxes(title_text="probability", row=1, col=2)
-        fig.update_yaxes(title_text="days in milk", row=2, col=1); fig.update_yaxes(title_text="probability", row=2, col=2)
+        fig.update_yaxes(title_text="days in milk", row=1, col=3)
         s0 = r["start"]
-        fig.update_layout(template="plotly_white", height=820, title=dict(text=f"Where the cow will be: {r['label']}", x=0.01), margin=dict(l=60, r=20, t=90, b=40))
+        fig.update_layout(template="plotly_white", height=560, title=dict(text=f"Where the cow will be: {r['label']}", x=0.01),
+                          legend=dict(orientation="h", yanchor="top", y=-0.22, xanchor="left", x=0), margin=dict(l=70, r=30, t=100, b=130))
         cap = (f"Starting state: lactation {s0['lactation']}, model step dim = {s0['dim_step']}, dp = {s0['dp_step']} ({r['unit']} resolution, step = {r['U']} d, {r['n_states']:,} states). "
                "All panels are probability distributions of ONE cow slot over the future, computed by repeatedly applying the model's transition matrix. Replaced animals are renewed by a heifer, "
-               "so the status and lactation panels describe the slot; the bottom-right panel isolates the original cow.")
+               "so the status and lactation panels describe the slot; the last panel isolates the original cow.")
         figs.append((f"distribution_{slug(r['label'])}", f"Distribution over time: {r['label']}", cap, fig))
     # write
     index = ["<html><head><meta charset='utf-8'><title>CowMRP projection</title><style>body{font-family:sans-serif;max-width:1100px;margin:auto}li{margin:8px 0}</style></head><body><h1>CowMRP projection</h1>",
