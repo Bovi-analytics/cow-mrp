@@ -3,41 +3,53 @@
 # ==============================
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyc
 .pytest_cache/
 .venv/
 venv/
 env/
-.ipynb_checkpoints/
 
 # ==============================
-# Local-only: agent instructions, tooling, notes (never pushed)
+# Claude Code / local instructions
+# Keep private; do NOT push
 # ==============================
 CLAUDE.md
-.claude/
-.superpowers/
-skills-lock.json
-memory/
-/Rough_documents
-presentation/
 
 # ==============================
-# Local-only: science documentation and manuscripts
+# Benchmark / migration scratch files
 # ==============================
-docs/
-*.docx
+benchmark_outputs/
+benchmark_outputs_baseline/
+baseline_key_metrics.txt
+baseline_run.log
+step*_run.log
+*_run.log
 
 # ==============================
-# Generated output (regenerate via the scripts that produce it)
+# Farm Simulation artifact (farm_simulation.py) -- regenerate via the
+# "Build Farm Simulation Engine" dashboard action or `python farm_simulation.py`
 # ==============================
-outputs/
+farm_simulation_outputs/
+
+# ==============================
+# Generated farm outputs
+# ==============================
+farm_dashboard_plotly.html
+farm_dashboard_static.html
+farm_data.csv
+farm_distribution_summary.csv
+farm_trajectory.csv
 *.csv
-*.parquet
-*.npz
-*.html
-*.png
-*.jpg
-*.jpeg
-*.log
+
+# ==============================
+# Dashboard runtime data (uploaded farm CSVs + their mappings) --
+# never checked in; regenerate by uploading through the dashboard.
+# The run registry itself is in-memory only (see dashboard/README.md).
+# ==============================
+dashboard/uploads/
+dashboard/overrides.json
+dashboard/run_provenance.json
 
 # ==============================
 # OS / editor files
@@ -46,3 +58,40 @@ outputs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Claude Code local settings
+.claude
+*.docx
+
+#presentation
+presentation/
+
+*.parquet
+*.npz
+*.html
+#docs
+docs/
+*.json
+
+# Claude Code memory (local cross-session notes -- never pushed)
+memory/
+
+# Rough notes / scratch files (local only; never pushed)
+/Rough_documents
+
+#older outputs
+
+/older_outputs
+#Farm simualtion outputs
+farm_simulation_outputs/
+*.png
+*.jpg
+*.jpeg
+
+# Superpowers plan-execution scratch (ledgers, briefs, review packages) --
+# never pushed, safe to delete between plans
+.superpowers/
+
+# Restructured layout (2026-10): every generated file lives under outputs/
+outputs/
+__pycache__/
