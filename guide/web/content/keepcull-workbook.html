@@ -1,0 +1,61 @@
+<p class="eyebrow">Keep or cull</p>
+<h1>The keep/cull accounting workbook</h1>
+<p class="lead">An Excel file that shows, cow by cow and horizon by horizon, how the keep-versus-cull call is built, with the sale of the cow now as its own visible column.</p>
+
+<div class="note">The workbook is a <b>reporting output</b>. It does not change the model, the reward vector or the numbers of <code>keep_cull_table</code>; it re-presents the same solves with the immediate sale made explicit.</div>
+
+<h2 id="use">What it is for</h2>
+<p>Use it when you want to see why a cow is called KEEP or CULL, to enter the price a buyer actually offers for particular cows, or to give an adviser or reviewer a file in which every step is an Excel formula they can inspect. If you only need the break-even value of every cow, <code>keep_cull_table</code> (see the <a href="tutorial.html#keepcull">tutorial</a>) is enough.</p>
+
+<h2 id="terms">The terms</h2>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td><b>KEEP</b></td><td>The expected discounted future value of the cow over the horizon, with the cost of every future replacement paid: <code>V_total(s) &minus; PV_rc(s)</code>.</td></tr>
+<tr><td><b>REPLACE</b></td><td>What replacing her now is worth: the sale of the cow now, plus the value of a fresh replacement heifer (state (1, 0, 0)) over the same horizon, minus the rearing cost of that heifer, charged once, now: <code>S + V_keep(h) &minus; C</code>.</td></tr>
+<tr><td><b>Estimated salvage</b> (<code>S_est</code>)</td><td>An indicative sale value of the cow now: body weight &times; dressing percentage &times; beef price &minus; culling fee.</td></tr>
+<tr><td><b>Actual net offer</b></td><td>A price you type for a cow (column K). It is the net cash received: the culling fee is not subtracted again.</td></tr>
+<tr><td><b>Salvage used</b> (<code>S</code>)</td><td>The typed offer if the cell is filled, otherwise the estimate. Never both.</td></tr>
+<tr><td><b>&Delta;Q</b></td><td><code>KEEP &minus; REPLACE</code>. Positive: keeping is better. Negative: replacing is better.</td></tr>
+<tr><td><b>Break-even offer</b></td><td><code>KEEP &minus; V_keep(h) + C</code>: the salvage at which KEEP and REPLACE are equal. It is the <code>value_&lt;N&gt;y</code> of <code>keep_cull_table</code>.</td></tr>
+<tr><td><b>Decision</b></td><td>CULL when the salvage used is above the break-even offer, otherwise KEEP. This is the same statement as &Delta;Q &lt; 0.</td></tr>
+</table>
+
+<h2 id="columns">Sheets and columns</h2>
+<p>The file has the sheets <code>README</code>, <code>Inputs</code>, one sheet per horizon (<code>Cows_1y</code>, <code>Cows_3y</code>, <code>Cows_5y</code> by default) and <code>Checks</code>. Grey cells are values from the model, yellow cells are inputs you may change, white cells are formulas.</p>
+<p>The <code>Inputs</code> sheet holds the beef price (B2), the dressing percentage (B3), the culling fee (B4) and the annual discount (B5), then one row per horizon with the rearing cost <code>C</code>, <code>V_total(h)</code>, <code>PV_rc(h)</code> and <code>V_keep(h)</code>. The table below is read from the package when this page is built, and a test compares it with the cells that are really written.</p>
+{{EXCEL_COLUMNS_TABLE}}
+
+<h2 id="salvage">Salvage now, salvage later, and double counting</h2>
+<ul>
+<li><b>Future replacement costs</b> of the cow and of her replacements are inside <code>PV_rc(s)</code>, so they are already paid in KEEP. The replacement cost <code>C</code> of the heifer bought now is charged once, in REPLACE.</li>
+<li><b>Future cull salvage</b> of the cow and of her replacements stays inside <code>V_total(s)</code>: it is the model's reward for a cull at a later time.</li>
+<li><b>Salvage now</b> is a different event: the sale of this cow today. It is added once, on the REPLACE side only (column L into column O). KEEP does not contain it, because in KEEP she is not sold today.</li>
+<li>A typed offer replaces the estimate; the two are never added together.</li>
+</ul>
+
+<h2 id="model">How it differs from the model</h2>
+<p>The MRP reward vector is <code>milk_income + pregnancy_reward + cull_reward &minus; mortality_cost &minus; feed_cost &minus; reproduction_cost</code>. Replacement cost is not in it, and the sale of the current cow is not in it either. The model's own comparison (<code>replacement_comparison</code>, <code>keep_cull_table</code>) does not credit the sale of the current cow, which is a documented limitation of the model; it therefore reports only the break-even value. The workbook leaves that comparison and the reward vector as they are and adds the sale as a column on top.</p>
+
+<h2 id="generate">How to generate it</h2>
+<pre><code>pip install "cowmrp[excel]"        # openpyxl
+
+python runners/cow/farm/keepcull.py --excel                      # default herd file, horizons 1, 3, 5 years
+python runners/cow/farm/keepcull.py --excel --years 1,3 --out-dir my_run
+python runners/cow/farm/keepcull.py --excel --set REARING_COST=2800   # scenario run, see below</code></pre>
+<p>The workbook is written as <code>keepcull_accounting.xlsx</code> next to <code>keepcull.csv</code> and <code>summary.csv</code>. From Python:</p>
+<pre><code>from cowmrp.domains.cow.keepcull_excel import write_keepcull_workbook
+write_keepcull_workbook(herd, "keepcull_accounting.xlsx", model, years=(1, 3, 5))   # herd: DataFrame with a state_id column</code></pre>
+<p>The formulas are stored without cached results. Excel calculates them when the file is opened; a viewer that does not calculate formulas will show empty cells.</p>
+
+<h2 id="checks">The Checks sheet</h2>
+<p>For every horizon it shows the number of cows, the sum of <code>|break-even offer &minus; value_&lt;N&gt;y of keep_cull_table|</code>, and the number of cows called CULL with the offers entered. The sum must be zero (to rounding): it shows that the workbook's formulas reproduce the model's existing comparison. The count of CULL calls depends on the estimates and offers, not on the model. Column U of each cow sheet shows the same difference per cow.</p>
+
+<h2 id="limits">Assumptions and limitations</h2>
+<ul>
+<li>The estimate is <b>indicative</b>. It uses the model's body weight of the cow's state, not her weight on the day of sale, and the model's dressing percentage, beef price and culling fee. Prices have a year and a place, listed in the <a href="methods.html#economic-settings">economic settings</a> table. When you have a real offer, type it.</li>
+<li>A typed offer must be <b>net</b>: what you actually receive, after any fee or hauling.</li>
+<li>Only the <b>current</b> cow's sale is added. Everything about the future comes from the model, with its own assumptions and limitations (see <a href="science.html">Science</a> and <a href="provenance.html">Provenance</a>).</li>
+<li>The model's values (grey cells) are pasted numbers. Changing the beef price, dressing percentage or culling fee on the <code>Inputs</code> sheet changes the <b>estimate only</b>; the future cull salvage inside <code>V_total</code> keeps the values the model was solved with, and so do the rearing cost and the discount. To change those consistently, run a scenario with <code>--set</code> (it re-solves and lists the non-default settings in the workbook).</li>
+<li>All values are expected values in USD over the stated horizon, for a cow in a given model state. They are not a prediction for an individual animal.</li>
+<li>The comparison is for one cow against a replacement heifer. It does not model herd-level constraints such as stall space or heifer supply.</li>
+</ul>

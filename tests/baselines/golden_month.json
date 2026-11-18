@@ -1,0 +1,21 @@
+{
+  "_note": "Scientific reference captured 2026-11-16 from the current implementation (month resolution, 5 y, annual gamma 0.95). Cow full table = 2,970 states; reachable from replacement state = 1,210; reachable means equal the historical Model_A baseline (12,382.709599 / 54,815.982755). Youngstock 41/71 reflects the current youngstock inputs; the older saved baseline 43/75 is stale.",
+  "cow": {
+    "time_unit": "month",
+    "num_states": 2970,
+    "nnz": 9040,
+    "matrix_checksum": "1ef453c4f0f98eb4",
+    "full_mean_V_finite": 12210.503580160454,
+    "full_mean_V_infinite": 54643.54341596233,
+    "reachable_states": 1210,
+    "reachable_mean_V_finite": 12382.709598617783,
+    "reachable_mean_V_infinite": 54815.98275770982,
+    "reward_total_sum": 683168.784994524
+  },
+  "youngstock": {
+    "time_unit": "month",
+    "num_states": 41,
+    "nnz": 71,
+    "matrix_checksum": "994788fc223447f6"
+  }
+}

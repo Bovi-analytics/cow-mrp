@@ -1,0 +1,47 @@
+<section class="hero">
+<div class="hero-grid"><div>
+<div class="eyebrow">Python package &middot; Markov reward process models of dairy cattle</div>
+<h1>CowMRP</h1>
+<p class="lead">Value cows, compare them, and project a whole herd forward with one transparent model. A domain-free Markov reward process engine, a cow domain and a youngstock domain, installable as <code>cowmrp</code>.</p>
+<div class="btns">
+<a class="btn pri" href="getting-started.html">Get started</a>
+<a class="btn" href="examples.html">Examples</a>
+<a class="btn" href="tutorial.html">Tutorial</a>
+<a class="btn" href="api/index.html">API reference</a>
+<a class="btn" href="cite.html">Cite</a>
+</div>
+</div><img class="hero-logo" src="assets/logo.png" alt="CowMRP logo: a cow's head inside a Markov chain of states">
+</div>
+<div class="stats">{{STATS}}</div>
+</section>
+
+<h2 id="overview">Overview</h2>
+<p>A Markov reward process (MRP) is a list of states, the probability of moving from each state to each other state in one step, and a reward earned in each state.
+From those three things you get the expected value of a cow, how a herd is spread over states as time passes, and what replacing a cow is worth.
+In CowMRP the cow is described by three variables only, <code>(lactation, days in milk, days pregnant)</code>, and every probability and reward is a separate, documented module you can read and change.</p>
+<p>It is written for researchers, graduate students and advisers who want to ask keep-or-replace and herd-projection questions of a model they can inspect, and for developers who want to build another animal domain on the same engine.</p>
+<figure><img src="assets/F08_steady_state_herd.png" alt="Steady-state herd of the cow model">
+<figcaption><b>The model's steady-state herd.</b> The tutorial herd of 200 synthetic cows is drawn from this distribution (saved validation figure).</figcaption></figure>
+
+<h2 id="capabilities">What you can do</h2>
+<div class="cards">
+<a class="card" href="examples.html#cow-comparison"><b>Compare two cows</b><span>Project an open and a pregnant cow forward and compare their expected value over time.</span></a>
+<a class="card" href="examples.html#keep-cull"><b>Keep or cull</b><span>The break-even sale value of every cow: keep, replace, and their difference, kept apart.</span></a>
+<a class="card" href="examples.html#whole-herd"><b>Project a herd</b><span>Load your own records, carry the herd forward, and write tables and dashboards.</span></a>
+<a class="card" href="examples.html#youngstock"><b>Youngstock</b><span>The calf, heifer and first-calving chain, as a second domain on the same engine.</span></a>
+<a class="card" href="science.html#time"><b>Three time resolutions</b><span>Month, week or day steps; one setting carries through states, probabilities, rewards and outputs.</span></a>
+<a class="card" href="science.html#modes"><b>Expected, stochastic or Monte Carlo</b><span>The exact distribution by default; sampled paths and Monte Carlo when you ask for them.</span></a>
+</div>
+
+<h2 id="install">Install</h2>
+<pre><code>pip install cowmrp                 # engine + domains (numpy, pandas, scipy)
+pip install "cowmrp[plot]"         # + matplotlib, plotly: dashboards and figures</code></pre>
+<p>Then follow <a href="getting-started.html">Getting started</a>: a whole farm in a dozen lines, with the output it prints.</p>
+
+<h2 id="principles">Design principles</h2>
+<ul>
+<li><b>The scientific model is the reference.</b> The package changes how the model is reached, not what it computes; results are tested against saved outputs of the original scripts.</li>
+<li><b>One engine, many domains.</b> <code>cowmrp.mrp</code> knows no animal. Cow and youngstock sit on top of it, and a check enforces that the engine imports no domain.</li>
+<li><b>Nothing is hidden.</b> Every probability and reward is its own small module; the replacement cost is charged in an explicit comparison, not folded into the reward vector.</li>
+<li><b>Fast by default.</b> The exact expected distribution is the default mode; sampled modes are available but never run unless you select them.</li>
+</ul>

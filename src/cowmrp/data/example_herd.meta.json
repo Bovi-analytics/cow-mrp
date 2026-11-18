@@ -1,0 +1,10 @@
+{
+  "time_unit": "month",
+  "unit_days": 30,
+  "max_lactation": 10,
+  "max_dim_days": 1110,
+  "max_dp_days": 300,
+  "num_states": 2970,
+  "mode": "equilibrium",
+  "seed": 42
+}

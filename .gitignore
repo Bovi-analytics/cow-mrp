@@ -1,97 +1,116 @@
 # ==============================
-# Python
+# Python / packaging
 # ==============================
 __pycache__/
 *.py[cod]
 *.pyo
-*.pyc
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
+*.egg
 .venv/
 venv/
 env/
+build/
+dist/
+*.egg-info/
+.eggs/
 
 # ==============================
-# Claude Code / local instructions
-# Keep private; do NOT push
+# Claude Code / local assistant files (private, never pushed)
 # ==============================
 CLAUDE.md
+.claude/
+.superpowers/
+memory/
+skills-lock.json
 
 # ==============================
-# Benchmark / migration scratch files
+# Local-only material
 # ==============================
+older_outputs/
+/Rough_documents
+presentation/
+*.docx
+# Literature PDFs are copyrighted: keep the reference list (docs/evidence/REFERENCES.md), not the papers
+docs/
+
+# ==============================
+# Generated outputs (regenerate with the runners; never hand-edit)
+# ==============================
+# Every folder called outputs/ (runners/<module>/outputs/, ...) is generated; the scripts and the source data that reproduce it are tracked.
+outputs/
 benchmark_outputs/
 benchmark_outputs_baseline/
-baseline_key_metrics.txt
-baseline_run.log
-step*_run.log
-*_run.log
-
-# ==============================
-# Farm Simulation artifact (farm_simulation.py) -- regenerate via the
-# "Build Farm Simulation Engine" dashboard action or `python farm_simulation.py`
-# ==============================
 farm_simulation_outputs/
+site/
+guide/site/
+*_run.log
+*.log
+baseline_run.log
+baseline_key_metrics.txt
+farm_example_output/
+farm_results/
+
+# Generated tables/figures at the repo root only (package data below is tracked)
+/*.csv
+/*.parquet
+/*.npz
+/*.html
+/*.png
 
 # ==============================
-# Generated farm outputs
-# ==============================
-farm_dashboard_plotly.html
-farm_dashboard_static.html
-farm_data.csv
-farm_distribution_summary.csv
-farm_trajectory.csv
-*.csv
-
-# ==============================
-# Dashboard runtime data (uploaded farm CSVs + their mappings) --
-# never checked in; regenerate by uploading through the dashboard.
-# The run registry itself is in-memory only (see dashboard/README.md).
+# Dashboard runtime data
 # ==============================
 dashboard/uploads/
 dashboard/overrides.json
 dashboard/run_provenance.json
 
 # ==============================
-# OS / editor files
+# OS / editor / temporary files
 # ==============================
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+*.tmp
+*.bak
+*.swp
+*~
 
-# Claude Code local settings
-.claude
-*.docx
+# ==============================
+# Internal / obsolete files (kept locally, not part of the shared repository)
+# ==============================
+PRIMARY.md
+requirements.txt
+guide/audit_guide.py
+runners/_shared/notebook/mrp_engine_original.ipynb
 
-#presentation
-presentation/
+# ==============================
+# Tracked on purpose: package data (the tutorial herd, lookup-table overrides). tests/ needs no exception; Python caches stay ignored everywhere.
+# ==============================
+!domains/**/data/
+!domains/**/data/**
+!src/**/data/
+!src/**/data/**
 
-*.parquet
-*.npz
-*.html
-#docs
-docs/
-*.json
-
-# Claude Code memory (local cross-session notes -- never pushed)
-memory/
-
-# Rough notes / scratch files (local only; never pushed)
-/Rough_documents
-
-#older outputs
-
-/older_outputs
-#Farm simualtion outputs
-farm_simulation_outputs/
-*.png
-*.jpg
-*.jpeg
-
-# Superpowers plan-execution scratch (ledgers, briefs, review packages) --
-# never pushed, safe to delete between plans
-.superpowers/
-
-# Restructured layout (2026-10): every generated file lives under outputs/
-outputs/
+# Last, so that the data exceptions above can never re-include a Python cache
 __pycache__/
+*.py[cod]
+
+# local-only material kept out of the first upload
+logos/
+guide/check_removed_domain.py
+
+# ==============================
+# Private working notes (audit trail, to-verify lists; never pushed)
+# ==============================
+notes/
+
+# Local-only browsable HTML reports (python runners/run_all.py --views); regenerate, never hand-edit
+views/

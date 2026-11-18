@@ -1,0 +1,10 @@
+include LICENSE README.md CITATION.cff
+recursive-include examples *.py
+recursive-include tests *.py *.md *.json *.csv
+recursive-include runners *.py *.md *.ipynb *.json *.csv
+recursive-include guide *.py *.md *.txt *.html *.css *.js *.png *.woff2 OFL.txt
+prune runners/*/outputs
+prune guide/site
+prune guide/web/site
+prune guide/web/outputs
+global-exclude __pycache__ *.py[cod]

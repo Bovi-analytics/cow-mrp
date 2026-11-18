@@ -1,0 +1,75 @@
+# Builds the documentation website (guide/web) from the package, the example scripts and the tutorial.
+#   python guide/web/build_web.py --examples   runs examples/*.py and saves their output and figures
+#   python guide/web/build_web.py              builds guide/web/site
+# The build job runs on every push to main and every pull request that touches its inputs, and uploads the site as a workflow artifact.
+# DEPLOYMENT IS OFF: the deploy job only runs when the repository variable PAGES_ENABLED is set to "true"
+# (Settings -> Secrets and variables -> Actions -> Variables) AND Pages is configured (Settings -> Pages -> Source: GitHub Actions).
+# Neither is done, so nothing is published. GitHub Pages also needs a public repository (or a paid plan).
+name: Documentation site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "guide/**"
+      - "examples/**"
+      - "CITATION.cff"
+      - "pyproject.toml"
+      - ".github/workflows/guide.yml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "guide/**"
+      - "examples/**"
+      - "CITATION.cff"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: guide-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the package and the documentation requirements
+        run: |
+          pip install -e ".[plot,parquet]"
+          pip install -r guide/requirements-docs.txt
+      - name: Run the examples and save their output
+        run: python guide/web/build_web.py --examples
+      - name: Write generated blocks, build both sites and check that nothing is stale
+        run: python guide/build_all.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cowmrp-site
+          path: guide/web/site
+          retention-days: 14
+      - uses: actions/upload-pages-artifact@v3
+        if: ${{ vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request' }}
+        with:
+          path: guide/web/site
+
+  deploy:
+    # Off until the repository variable PAGES_ENABLED is set to "true" (see the header of this file).
+    if: ${{ vars.PAGES_ENABLED == 'true' && github.event_name != 'pull_request' }}
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

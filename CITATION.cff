@@ -1,0 +1,31 @@
+# Citation metadata. ORCIDs, funding, the release date and the DOI are added when available.
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata in this file."
+title: "cowmrp: Markov reward process models of dairy cattle"
+abstract: >-
+  A Python package of Markov reward process (MRP) models of dairy cattle: a domain-free MRP engine with a cow domain
+  (state: lactation, days in milk, days pregnant) and a youngstock domain. It values cows (keep or replace), projects a herd
+  forward with the expected distribution, stochastic paths or Monte Carlo, and reports environmental outputs beside economic ones.
+type: software
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/Bovi-analytics/cow-mrp"
+url: "https://bovi-analytics.github.io/cow-mrp/"
+keywords:
+  - markov reward process
+  - dairy cattle
+  - replacement
+  - simulation
+  - livestock
+authors:
+  - family-names: Sharma
+    given-names: Sumit
+    affiliation: "Department of Animal Science, Cornell University, Ithaca, New York, USA"
+    # orcid: pending (not provided yet; add as "https://orcid.org/0000-0000-0000-0000")
+  - family-names: Hansen
+    given-names: Edward
+    # orcid: pending (not provided yet; add as "https://orcid.org/0000-0000-0000-0000")
+  - family-names: Hostens
+    given-names: Miel
+    affiliation: "Department of Animal Science, Cornell University, Ithaca, New York, USA"
+    # orcid: pending (not provided yet; add as "https://orcid.org/0000-0000-0000-0000")

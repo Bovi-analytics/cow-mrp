@@ -1,0 +1,9 @@
+# Everything needed to BUILD the documentation site (guide/build.py). Not needed to run the model's runners.
+# pdoc imports the cowmrp package (from src/) to read its docstrings, so the packages it imports are listed too.
+pdoc
+numpy
+pandas
+scipy
+openpyxl
+matplotlib
+plotly

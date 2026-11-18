@@ -1,0 +1,41 @@
+# Fast test suite on every push and pull request (about 1-2 minutes per job).
+# Month and week resolution, expected distribution; the slow set (day resolution, weekly Monte Carlo) and the clean-install tests are NOT run here:
+# they are in release-checks.yml (manual). This workflow only tests: it publishes nothing, deploys nothing and has read-only permissions.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast:
+    name: fast suite (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, python: "3.12" }
+          - { os: ubuntu-latest, python: "3.13" }
+          - { os: windows-latest, python: "3.13" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install the package with the test, plotting and Parquet extras (the runner scripts write Parquet files)
+        run: python -m pip install -e ".[dev,plot,parquet]"
+      - name: Fast tests (pyproject.toml addopts deselects the slow and install tests)
+        run: python -m pytest -q --durations=10

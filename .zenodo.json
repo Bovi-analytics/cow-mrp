@@ -1,0 +1,34 @@
+{
+  "upload_type": "software",
+  "title": "cowmrp: Markov reward process models of dairy cattle",
+  "description": "A Python package of Markov reward process (MRP) models of dairy cattle: a domain-free MRP engine with a cow domain (state: lactation, days in milk, days pregnant) and a youngstock domain. It values cows (keep or replace), projects a herd forward with the expected distribution, stochastic paths or Monte Carlo, and reports environmental outputs beside economic ones.",
+  "creators": [
+    {
+      "name": "Sharma, Sumit",
+      "affiliation": "Department of Animal Science, Cornell University, Ithaca, New York, USA"
+    },
+    {
+      "name": "Hansen, Edward"
+    },
+    {
+      "name": "Hostens, Miel",
+      "affiliation": "Department of Animal Science, Cornell University, Ithaca, New York, USA"
+    }
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "keywords": [
+    "markov reward process",
+    "dairy cattle",
+    "replacement",
+    "simulation",
+    "livestock"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/Bovi-analytics/cow-mrp",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    }
+  ]
+}

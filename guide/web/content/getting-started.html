@@ -1,0 +1,30 @@
+<p class="eyebrow">Getting started</p>
+<h1>Install and run a whole farm</h1>
+<p class="lead">Five minutes from <code>pip install</code> to a projected herd.</p>
+
+<h2 id="requirements">Requirements</h2>
+<p>Python 3.10 or newer (tested on 3.12 and 3.13). The core needs <code>numpy</code>, <code>pandas</code> and <code>scipy</code>; figures and dashboards need the <code>plot</code> extra; the research scripts write Parquet files and need the <code>parquet</code> extra.</p>
+
+<h2 id="install">Install</h2>
+<pre><code>pip install cowmrp
+pip install "cowmrp[plot,parquet]"          # + figures, dashboards and Parquet output
+pip install -e ".[dev,plot,parquet]"        # from a clone of the source repository</code></pre>
+
+<h2 id="first">A first working example</h2>
+<p>Build the cow model, load the 200-cow synthetic herd that ships with the package, and project it 24 months ahead with the exact expected distribution.</p>
+<p class="cap">quickstart.py</p>
+{{CODE}}
+<p class="cap">Output</p>
+{{OUT}}
+<p>The <code>current</code> column is the number of cows in each status today; <code>predicted</code> is the expected number after 24 months, including cows that were culled and replaced along the way.</p>
+
+<h2 id="own-herd">Your own herd</h2>
+<p>A CSV with one row per cow and the columns <code>lactation</code> (1&ndash;10), <code>dim_days</code> (days in milk), <code>dp_days</code> (days pregnant, 0 if open) and optionally <code>cow_id</code>. Replace <code>example_herd_path()</code> by the file name. <code>load_herd</code> maps each cow to a model state and reports every record it cannot map, with its row and <code>cow_id</code>.</p>
+<div class="note"><b>Tutorial data.</b> The example herd is synthetic: cows drawn from the model's own steady-state herd (seed 42). No real farm records are shipped.</div>
+
+<h2 id="next">Next</h2>
+<div class="cards">
+<a class="card" href="examples.html"><b>Examples</b><span>Four complete, runnable scripts with their real output.</span></a>
+<a class="card" href="tutorial.html"><b>Tutorial</b><span>The workflow step by step: data, comparison, keep/cull, projection, time resolution.</span></a>
+<a class="card" href="science.html"><b>Scientific background</b><span>What the model is: states, time, rewards and the keep/replace comparison.</span></a>
+</div>

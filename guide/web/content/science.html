@@ -1,0 +1,52 @@
+<p class="eyebrow">Scientific background</p>
+<h1>What the model is</h1>
+<p class="lead">A short, self-contained description of the framework and of the cow model built on it. It states what the package computes; it adds no result of its own.</p>
+<div class="note">This page covers concepts only. The maintainers' assumption register, model audit and literature list are kept separately and will be linked from here once they are released.</div>
+
+<h2 id="mrp">Markov reward processes</h2>
+<p>A Markov reward process has three parts: a finite set of <b>states</b>, a <b>transition matrix</b> <code>P</code> whose entry <code>P[i, j]</code> is the probability of moving from state <code>i</code> to state <code>j</code> in one time step (each row sums to 1), and a <b>reward</b> earned in each state.
+With a discount factor <code>&gamma;</code> per step, the expected discounted value of a state is the reward it earns now plus the discounted expected value of where it goes next. Over a finite horizon this is a sum over steps; for an infinite horizon it is the solution of a linear system.</p>
+<p>The engine, <code>cowmrp.mrp</code>, implements exactly this and knows no animal. A <b>domain</b> supplies the states, the probabilities and the rewards; <code>cowmrp.model.build_model</code> assembles and checks them (every row must sum to 1, and nothing is silently rescaled).</p>
+
+<h2 id="state">The cow state</h2>
+<p>A cow is described by three variables, in model-step units: her <b>lactation</b> number, her <b>days in milk</b> (<code>dim</code>) and her <b>days pregnant</b> (<code>dp</code>; 0 when open). Health, milk yield and the like are not state variables: they enter through the probabilities and rewards that depend on the state.</p>
+<p>Which combinations exist is decided by named rules: conception can only follow a calving, it can only happen after the voluntary waiting period, and the table has a finite range of <code>dim</code> and <code>dp</code>. At month resolution the cow model has {{CO_STATES}} states and {{CO_NNZ}} transitions. Leaving the herd (a cull or a death) sends the cow to the <b>replacement state</b>, a first-lactation heifer at calving, so the process stays closed and herd size is constant.</p>
+
+<h2 id="time">Time</h2>
+<p>The step is a <code>month</code> (30 days, the default), a <code>week</code> (7 days) or a <code>day</code>. <code>dim</code> and <code>dp</code> count steps, not calendar days, while fixed durations such as the length of gestation stay in real days. A state is the cow at a step boundary: a state with <code>dim = k</code> stands for a cow whose age in milk is uniformly spread over the step that starts at <code>k</code>. One setting, read once when the package is imported, is carried through states, probabilities, rewards, discounting, simulation and every exported label; set <code>COW_TIME_UNIT</code> before starting Python.</p>
+
+<h2 id="rewards">Rewards</h2>
+<p>The reward earned in a state per step is</p>
+<pre><code>total = milk_income + pregnancy_reward + cull_reward - mortality_cost - feed_cost - reproduction_cost</code></pre>
+<p>Each term is its own module in <code>cowmrp.domains.cow.rewards</code>. Environmental quantities (enteric and manure methane, nitrous oxide, nitrogen balance, CO<sub>2</sub>) are computed from the same state and do not depend on any price; their monetary versions are separate, switched off by default, and enter the total only when enabled. The published methods, inputs, equations, assumptions and limitations of these quantities are on the <a href="methods.html">Methods</a> page.</p>
+<p>The <b>replacement cost is not part of the reward vector</b>: leaving the herd is a transition, and the cost is charged where cows are compared (next section), so it is never counted twice.</p>
+
+<h2 id="keepcull">Keep, replace and the break-even value</h2>
+<p>Three quantities are kept apart for a cow in a given state:</p>
+<table><tr><th>Quantity</th><th>Meaning</th></tr>
+<tr><td><b>keep</b></td><td>the expected discounted value of the cow, including the cost of her future replacements</td></tr>
+<tr><td><b>replace</b></td><td>the value of a newly calved heifer, after the cost of one replacement</td></tr>
+<tr><td><b>value</b> = keep &minus; replace</td><td>the break-even sale value: culling and replacing her now beats keeping her only if the sale brings more than this</td></tr></table>
+<p>The sale price is an input of the keep/cull table (<code>offer</code>); the model does not invent one. The salvage value of a sale is not credited in the model's own comparison, which is documented as a known limitation. The <a href="keepcull-workbook.html">keep/cull workbook</a> adds the sale of the current cow as a separate, visible column (an estimate, or an offer you type) without changing the model.</p>
+
+<h2 id="modes">Expected, stochastic and Monte Carlo</h2>
+<table>
+<tr><th>Mode</th><th>What it computes</th><th>Use it for</th></tr>
+<tr><td><code>expected</code> (default)</td><td>the exact distribution of the herd over states after each step; deterministic and fast</td><td>planning, scenario comparison, dashboards</td></tr>
+<tr><td><code>stochastic</code></td><td>one sampled path per cow</td><td>one plausible herd history</td></tr>
+<tr><td><code>monte_carlo</code></td><td>many sampled herds: mean, standard deviation, 5th and 95th percentile</td><td>when the spread matters, mainly small herds</td></tr></table>
+<p>For a large herd the sampled modes agree with the expected distribution on the mean and cost far more time, so nothing in the package runs them unless you select them.</p>
+
+<h2 id="youngstock">Youngstock</h2>
+<p>The calf, heifer and first-calving chain is a second domain on the same engine, with {{YS_STATES}} states and {{YS_NNZ}} transitions. Its output feeds the replacement flow when the two are coupled; the <a href="examples.html#youngstock">example</a> shows where a newborn calf is after 6 to 36 months.</p>
+
+<h2 id="validation">How the package is checked</h2>
+<ul>
+<li>Every transition row is checked to sum to 1, and a missing implementation is a hard error, never a silent fallback.</li>
+<li>The package's results are compared with saved outputs of the original scripts: tables are byte-identical, and value comparisons agree to within rounding.</li>
+<li>The default test suite runs in about a minute; day resolution and Monte Carlo parity are separate, longer checks.</li>
+<li>Passing a test shows that the code reproduces the reference model; it does not by itself show that a biological assumption is right.</li>
+</ul>
+
+<h2 id="more">Further reading</h2>
+<p>The <a href="tutorial.html">tutorial</a> walks through the workflow, the <a href="api/index.html">API reference</a> documents every function, and <a href="cite.html">Cite</a> says how to refer to the package.</p>

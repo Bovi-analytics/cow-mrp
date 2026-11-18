@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cowmrp Tutorial</title>
+<style>
+:root{--bg:#fff;--fg:#212529;--mut:#6c757d;--line:#dee2e6;--acc:#2f6f3e;--soft:#f3f7f4;--code:#f1f3f5;--warn:#fff7e0}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15181a;--fg:#e4e6e8;--mut:#9aa1a8;--line:#2e3337;--acc:#7fc48f;--soft:#1c2220;--code:#20262a;--warn:#2a2515}}
+:root[data-theme=dark]{--bg:#15181a;--fg:#e4e6e8;--mut:#9aa1a8;--line:#2e3337;--acc:#7fc48f;--soft:#1c2220;--code:#20262a;--warn:#2a2515}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{display:flex;gap:32px;max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+nav{position:sticky;top:16px;align-self:flex-start;width:210px;flex:none;font-size:.9rem}
+nav a{display:block;padding:3px 0;color:var(--mut);text-decoration:none}nav a:hover{color:var(--acc)}
+nav .top{margin-bottom:10px}
+main{min-width:0;flex:1;max-width:760px}
+h1{font-size:2.1rem;margin:.1em 0}
+h2{margin-top:2.2em;padding-top:.4em;border-top:1px solid var(--line)}
+a{color:var(--acc)}
+code{background:var(--code);padding:.1em .35em;border-radius:4px;font-size:.9em}
+pre{position:relative;background:var(--code);padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:.88rem;line-height:1.5}
+pre code{background:none;padding:0}
+button.copy{position:absolute;top:6px;right:6px;font:12px system-ui;border:1px solid var(--line);background:var(--bg);color:var(--mut);border-radius:5px;padding:2px 8px;cursor:pointer}
+.note{background:var(--soft);border-left:4px solid var(--acc);padding:10px 14px;border-radius:0 8px 8px 0;margin:1em 0}
+.warn{background:var(--warn);border-left:4px solid #d9a400;padding:10px 14px;border-radius:0 8px 8px 0;margin:1em 0}
+figure{margin:1.2em 0}figure img{max-width:100%;border:1px solid var(--line);border-radius:8px;background:#fff}
+figcaption{color:var(--mut);font-size:.88rem;margin-top:.3em}
+table{border-collapse:collapse;width:100%;margin:.8em 0;font-size:.93rem}
+th,td{border-bottom:1px solid var(--line);padding:.4em .6em;text-align:left;vertical-align:top}
+th{color:var(--mut);font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.mut{color:var(--mut)}
+@media (max-width:820px){.wrap{display:block}nav{position:static;width:auto;margin-bottom:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+  <a class="top" href="index.html">&larr; Documentation home</a>
+  <a href="#what">1. What the package is</a>
+  <a href="#setup">2. Install</a>
+  <a href="#farm">3. Your farm data</a>
+  <a href="#cow">4. One cow, cow A vs cow B</a>
+  <a href="#keepcull">5. Keep or cull</a>
+  <a href="#project">6. Whole-farm projection</a>
+  <a href="#modes">7. Expected, stochastic, Monte Carlo</a>
+  <a href="#units">8. Time resolution</a>
+  <a href="#env">9. Environmental outputs</a>
+  <a href="#domain">10. Your own domain</a>
+  <a href="#verify">11. Checks and tests</a>
+  <a href="#where">12. Where things live</a>
+</nav>
+<main>
+<p class="mut">cowmrp tutorial</p>
+<h1>Using the cowmrp package</h1>
+<p>Everything here is run from Python (or the runner scripts in the repository) and describes the model as it is: nothing on this page introduces new biology or economics.</p>
+
+<h2 id="what">1. What the package is</h2>
+<p><code>cowmrp</code> contains a <b>domain-free Markov reward process engine</b> (<code>cowmrp.mrp</code>) and two animal domains built on it: the <b>cow</b>
+(state <code>(lactation, dim, dp)</code>: lactation number, days in milk, days pregnant, in model-step units) and the <b>youngstock</b> chain (calf, heifer, first calving).
+A Markov reward process is a list of states, the probability of moving from each state to each other state in one step, and a reward earned in each state.
+From these you get the expected value of a cow, how a herd is distributed over time, and what a replacement is worth.</p>
+<figure><img src="assets/F01_milk_curves.png" alt="Milk curves by lactation">
+<figcaption>Milk curves by lactation (saved validation figure).</figcaption></figure>
+<p>The layers depend in one direction only: <code>cowmrp.mrp</code> (engine) &larr; <code>cowmrp.domain</code>, <code>cowmrp.model</code> (build and solve any domain) &larr;
+<code>cowmrp.domains.cow</code> / <code>youngstock</code> &larr; the <code>runners/</code> scripts. The engine imports no animal; a check (<code>runners/_shared/checks/verify_mrp_boundary.py</code>) enforces it.</p>
+
+<h2 id="setup">2. Install</h2>
+<pre><code>pip install cowmrp                 # engine + domains
+pip install "cowmrp[plot]"         # + matplotlib and plotly for dashboards and figures
+pip install -e ".[dev,plot,parquet]"       # from a clone of the repository; Python 3.10 or newer</code></pre>
+<p>Build the model and look at it:</p>
+<pre><code>from cowmrp.model import build_model
+model = build_model("cow")
+print(len(model.states), "states")          # {{COW_STATES}} at month resolution
+print(model.states.head())</code></pre>
+
+<h2 id="farm">3. Your farm data</h2>
+<p>One row per cow, described in <b>real days</b>. Health and DNB flags are not state variables and are not used.</p>
+<table>
+<tr><th>Column</th><th>Meaning</th></tr>
+<tr><td><code>cow_id</code></td><td>optional and unique; 1..n when absent</td></tr>
+<tr><td><code>lactation</code></td><td>1 to 10</td></tr>
+<tr><td><code>dim_days</code></td><td>days in milk, 0 or more</td></tr>
+<tr><td><code>dp_days</code></td><td>days pregnant; 0 for an open cow (the default)</td></tr>
+<tr><td><code>state_id</code></td><td>alternative: the model state of the cow (when given with the days, they must agree)</td></tr>
+<tr><td><code>uim</code>, <code>up</code></td><td>alternative to the days: the model's step indices, as <code>generate_herd</code> writes them</td></tr>
+</table>
+<pre><code>from cowmrp.data import example_herd_path, example_raw_herd_path
+from cowmrp.domains.cow.farm import load_herd
+
+herd = load_herd(example_raw_herd_path(), model)    # or a DataFrame, or "my_herd.csv"
+print(herd[["cow_id", "state_id", "lactation", "dim_days", "dp_days", "status"]].head())</code></pre>
+<p>A cow is mapped to a state with the rule the original generator used (<code>dim_step_of_days</code>, <code>dp_step_of_days</code>, then the matching <code>(lactation, dim, dp)</code> state);
+<code>load_herd</code> adds validation only. Every problem is reported at once with its row and <code>cow_id</code>: missing or non-numeric values, lactation outside 1-10, negative days,
+duplicate <code>cow_id</code>, a combination the model has no state for (with the nearest valid states), a <code>state_id</code> outside the table. A herd file made under another
+time resolution is refused. Errors raise <code>HerdDataError</code>.</p>
+<div class="note"><b>Tutorial dataset.</b> The example herd is 200 <b>synthetic</b> cows drawn from the model's own steady-state herd (seed 42, month resolution);
+no real farm records are shipped. <code>example_herd_path()</code> is in the model schema, <code>example_raw_herd_path()</code> is the same cows as a farmer would export them.
+Make another with <code>generate_herd(model, "equilibrium", n_cows, seed)</code> (also modes <code>mix</code> and <code>exact</code>).</div>
+
+<h2 id="cow">4. One cow, or cow A against cow B</h2>
+<p>Project individual cows forward and compare them: rewards and distributions over time, in days.</p>
+<pre><code>from cowmrp.domains.cow.projection import compare_cows
+
+scenarios = [
+    dict(label="open",     time_unit="month", lactation=2, dim_days=150, dp_days=0),
+    dict(label="pregnant", time_unit="month", lactation=2, dim_days=150, dp_days=60),
+]
+results = compare_cows(scenarios, years=2)         # a dict {scenario index: result}; n_trajectories=100 adds Monte Carlo bands
+for i, sc in enumerate(scenarios):
+    print(sc["label"], round(results[i]["finite_horizon_value"]))       # expected 2-year value, USD</code></pre>
+<p>Scenarios may use different time resolutions: those other than the current one run in worker processes. Figures and tables: <code>cowmrp.viz.projection</code>
+(<code>projection_figures</code>, <code>projection_tables</code>), or the script <code>runners/cow/projection.py</code> (edit <code>SCENARIOS</code> at the top).</p>
+<figure><img src="assets/F11_rewards_per_day.png" alt="Daily rewards by days in milk">
+<figcaption>Daily milk income, feed cost and reproduction cost per cow-day for open cows (saved validation figure).</figcaption></figure>
+
+<h2 id="keepcull">5. Keep or cull</h2>
+<p>Three quantities are kept apart: <b>keep</b> (expected future value of the cow, her future replacement costs included), <b>replace</b> (the value of a heifer bought now, after the cost of one replacement)
+and their difference, the <b>break-even sale value</b>. Culling and replacing her now beats keeping her only if the sale brings more than that value.</p>
+<pre><code>from cowmrp.domains.cow.keepcull import keep_cull_table, keep_cull_summary
+
+table = keep_cull_table(herd, model, years=(1, 3, 5), offer=900)    # USD offered per cow
+print(table.nsmallest(5, "value_3y"))                                # weakest cows first
+print(keep_cull_summary(table, (1, 3, 5)))</code></pre>
+<p>Without <code>offer</code> the table only ranks the cows. With it, <code>decision_&lt;N&gt;y</code> is CULL when the offer exceeds the break-even value, and <code>stable</code> says whether the call
+is the same at every horizon. <code>detail=True</code> adds <code>keep_&lt;N&gt;y</code> and <code>replace_&lt;N&gt;y</code>. The salvage value of a sale is not credited in the model's own comparison
+(a documented limitation of the model) and no sale price is invented. The same numbers come out of <code>replacement_comparison</code> for a single cow.</p>
+<p>To see the call built step by step, with the sale of the cow now as its own column (an estimate, or the offer you type), write the <a href="keepcull-workbook.html">Excel accounting workbook</a>: <code>python runners/cow/farm/keepcull.py --excel</code>.</p>
+
+<h2 id="project">6. Whole-farm projection</h2>
+<pre><code>from cowmrp.domains.cow.farm import project_herd
+from cowmrp.viz.farm import write_farm_outputs
+
+result = project_herd(herd, model, mode="expected", steps=24)       # 24 steps = 24 months at month resolution
+print(result["distribution_summary"].query("grouper == 'status'"))
+write_farm_outputs(result, "farm_results")</code></pre>
+<p>The herd is carried forward with the model's own transition matrix and summarised by status (open / pregnant / dry), lactation, DIM stage and month in milk. Cows that have never been replaced
+are tracked separately from cows that entered through the replacement state. <code>result["values"]</code> holds per-cow values (<code>V</code>, <code>V_keep</code>,
+<code>replacement_value</code>, <code>pregnancy_value</code>); pass <code>values=False</code> to skip them. <code>write_farm_outputs</code> writes the CSV tables and two dashboards
+(<code>dashboard.html</code>, static; <code>dashboard_plotly.html</code>, interactive). The complete script is <code>examples/whole_farm_example.py</code>.</p>
+<figure><img src="assets/F08_steady_state_herd.png" alt="Steady-state herd">
+<figcaption>The model's steady-state herd, from which the tutorial dataset is drawn (saved validation figure).</figcaption></figure>
+
+<h2 id="modes">7. Expected, stochastic and Monte Carlo</h2>
+<table>
+<tr><th><code>mode</code></th><th>What it computes</th><th>Use it for</th></tr>
+<tr><td><code>expected</code> (default)</td><td>The exact distribution of the herd over states after each step. Deterministic and fast</td><td>Planning, scenario comparison, dashboards</td></tr>
+<tr><td><code>stochastic</code></td><td>One sampled path per cow (<code>seed</code>)</td><td>One plausible herd history; <code>result["trajectory"]</code></td></tr>
+<tr><td><code>monte_carlo</code></td><td>Many sampled herds (<code>sims</code>): mean, standard deviation, 5th and 95th percentile</td><td>When the spread matters, mainly small herds; <code>result["monte_carlo"]</code></td></tr>
+</table>
+<p>For a large herd the sampled modes agree with <code>expected</code> on the mean and cost far more time, so nothing in the package runs them unless you select them.</p>
+
+<h2 id="units">8. Time resolution</h2>
+<p>The model steps in <code>month</code> (30 d, the default), <code>week</code> (7 d) or <code>day</code> (1 d). Set it before Python starts and keep it for the whole process:</p>
+<pre><code>COW_TIME_UNIT=week python my_script.py        # PowerShell: $env:COW_TIME_UNIT="week"; python my_script.py</code></pre>
+<p>Dim and dp are model-step units, not calendar days; durations such as gestation stay in real days. Probabilities, rewards, discounting and exported labels all follow the one setting.
+A herd file made at one resolution is refused at another (state ids are not comparable). The day resolution has about 2.4 million transitions: use it on purpose.</p>
+
+<h2 id="env">9. Environmental outputs</h2>
+<p>The physical quantities (enteric and manure methane, N2O, nitrogen balance, CO2) are always computed from the animal's state by <code>cowmrp.domains.cow.rewards.environment.compute_environment</code>
+and do not depend on any price. The monetary environmental rewards are separate specs, switched off by default (<code>ENABLE_REWARD_*</code> flags in <code>parameters.py</code>), and enter the economic total only when enabled.</p>
+
+<h2 id="domain">10. Your own domain</h2>
+<p>A domain is a package with <code>parameters</code>, <code>states</code> (<code>build_&lt;name&gt;_states</code>), <code>probabilities</code> (<code>compute_probabilities</code>), <code>transitions</code>
+(<code>compute_transitions</code>) and optionally <code>rewards</code> (<code>compute_rewards</code>). <code>cowmrp.domain.validate_domain</code> checks the interface;
+<code>build_model("your_package")</code> builds it with the same engine. <code>python runners/_shared/new_domain.py &lt;name&gt;</code> creates the stubs and a runner module.</p>
+
+<h2 id="verify">11. Checks and tests</h2>
+<pre><code>pytest                  # fast suite, about 1 minute: month and week, expected distribution
+pytest -m slow          # day resolution and weekly Monte Carlo parity (about 13 minutes)
+pytest -m install       # builds the wheel and installs it in a clean virtual environment
+python runners/cow/checks/verify_farm.py            # the farm layer; more verify_* scripts in runners/*/checks/</code></pre>
+<p>The tests compare the package with saved results of the original runners (<code>tests/baselines/</code>); <code>tests/README.md</code> lists them and the known pre-existing failures.</p>
+
+<h2 id="where">12. Where things live</h2>
+<table>
+<tr><th>Path</th><th>What</th></tr>
+<tr><td><code>src/cowmrp/mrp/</code></td><td>domain-free engine</td></tr>
+<tr><td><code>src/cowmrp/model.py</code>, <code>domain.py</code></td><td>build and solve any domain; the domain interface</td></tr>
+<tr><td><code>src/cowmrp/domains/cow/</code></td><td>states, probabilities, rewards, <code>farm.py</code>, <code>keepcull.py</code>, <code>projection.py</code></td></tr>
+<tr><td><code>src/cowmrp/viz/</code></td><td>projection figures, farm dashboards</td></tr>
+<tr><td><code>runners/</code></td><td>scripts that use the package; outputs under <code>runners/&lt;module&gt;/outputs/</code></td></tr>
+<tr><td><code>examples/</code></td><td>four runnable scripts: <code>cow_comparison_example.py</code>, <code>keep_cull_example.py</code>, <code>whole_farm_example.py</code>, <code>youngstock_example.py</code></td></tr>
+</table>
+<p>The <a href="files.html">file guide</a> describes every file and the <a href="api/index.html">API reference</a> every function.</p>
+</main>
+</div>
+<script>
+document.querySelectorAll('pre').forEach(function(p){
+  var b=document.createElement('button');b.className='copy';b.textContent='Copy';
+  b.onclick=function(){var t=p.querySelector('code').innerText;
+    (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1200)}).catch(function(){});};
+  p.appendChild(b);
+});
+</script>
+</body>
+</html>
