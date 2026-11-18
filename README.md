@@ -16,7 +16,7 @@ pip install -e ".[dev,plot,parquet]"       # from a clone of this repository (Py
 ```
 
 The installed package contains the engine, the domains, the plotting helpers and the 200-cow tutorial herd. The runner scripts (`runners/`), `examples/`,
-`user_examples/` (the example notebooks), the tests and the documentation sources are in the source repository, https://github.com/Bovi-analytics/cow-mrp (not public yet); the commands in
+`user_examples/` (the example notebooks), the tests and the documentation sources are in the source repository, https://github.com/Bovi-analytics/cow-mrp; the commands in
 "Running the scripts" and "Tests" below are for a clone.
 
 ## Quick start: a whole farm in a few lines
