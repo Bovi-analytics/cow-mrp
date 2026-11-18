@@ -60,3 +60,16 @@ def test_impact_lists_dependents(capsys):
     sync.impact("src/cowmrp/domains/cow/rewards/base.py")
     out = capsys.readouterr().out
     assert "reward_table" in out and "baselines" in out
+
+
+def test_examples_page_lists_every_example_notebook():
+    import glob
+    if not os.path.isdir(os.path.join(ROOT, "user_examples")):
+        pytest.skip("user_examples/ is obtained from GitHub; it is not part of the source distribution")
+    page =open(os.path.join(ROOT, "guide", "web", "content", "notebooks.html"), encoding="utf8").read()
+    notebooks = sorted(os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "user_examples", "[0-9][0-9]_*.ipynb")))
+    assert len(notebooks) == 5
+    assert "{{NOTEBOOK_ROWS}}" in page                      # the notebook list is generated from user_examples/README.md at build time
+    readme = open(os.path.join(ROOT, "user_examples", "README.md"), encoding="utf8").read()
+    assert [n for n in notebooks if n not in readme] == []   # every notebook file is in the README table that feeds the page
+    assert os.path.exists(os.path.join(ROOT, "user_examples", "custom_domain", "insemination", "states.py"))

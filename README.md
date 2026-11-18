@@ -16,7 +16,7 @@ pip install -e ".[dev,plot,parquet]"       # from a clone of this repository (Py
 ```
 
 The installed package contains the engine, the domains, the plotting helpers and the 200-cow tutorial herd. The runner scripts (`runners/`), `examples/`,
-the tests and the documentation sources are in the source repository, https://github.com/Bovi-analytics/cow-mrp (not public yet); the commands in
+`user_examples/` (the example notebooks), the tests and the documentation sources are in the source repository, https://github.com/Bovi-analytics/cow-mrp (not public yet); the commands in
 "Running the scripts" and "Tests" below are for a clone.
 
 ## Quick start: a whole farm in a few lines
@@ -32,6 +32,8 @@ herd = load_herd(example_herd_path(), model)          # or your own CSV / DataFr
 result = project_herd(herd, model, mode="expected", steps=24)
 write_farm_outputs(result, "farm_results")            # CSV tables + dashboard.html + dashboard_plotly.html
 ```
+
+**Example notebooks.** The folder [`user_examples/`](user_examples/) holds five Jupyter notebooks that start with `pip install "cowmrp[plot,excel]"`, import only from the installed package and run on a CSV that you replace with your own: cows from a CSV with keep/cull, a farm projection with the interactive Plotly dashboard, individual rewards, a youngstock farm, and a domain of your own on the generic engine. They are not part of the installed package; get them with `git clone https://github.com/Bovi-analytics/cow-mrp.git` (or Download ZIP on GitHub) and see `user_examples/README.md` and the Examples page of the documentation site.
 
 A complete script is `examples/whole_farm_example.py`; the same steps are walked through in the [tutorial](https://bovi-analytics.github.io/cow-mrp/tutorial.html) of the documentation site (online once the repository is public; the source is `guide/tutorial.html`).
 
@@ -72,8 +74,21 @@ file made under another time resolution. A DataFrame is accepted wherever a CSV 
 ### Time resolution
 
 The model steps in `month` (30 d, default), `week` (7 d) or `day` (1 d). Set it **before Python starts**: `COW_TIME_UNIT=week python my_script.py`.
+The resolution is not a display setting: it rebuilds the state space, the transition probabilities (rescaled to the step), the reward of every state (the rate integrated over the days
+one step spans) and so the expected values. `dim` and `dp` are step indices of the chosen resolution, not calendar days; durations such as gestation stay in real days.
 One process holds one resolution (the cow domain reads it once, when imported); `compare_cows` runs scenarios of another resolution in worker processes for you.
-A herd file made at one resolution is refused at another; regenerate it. The day resolution has about 2.4 million transitions: use it deliberately.
+A herd file made at one resolution is refused at another; regenerate it. The day resolution is large: use it deliberately.
+
+<!-- GEN:resolution_table -->
+| Resolution | Step | States | Transitions | Example cow as `(dim, dp)` |
+|---|---:|---:|---:|---:|
+| month | 30 d | 2,970 | 9,040 | (4, 2) |
+| week | 7 d | 42,290 | 131,197 | (20, 9) |
+| day | 1 d | 1,952,060 | 6,109,989 | (149, 60) |
+
+The example cow is in her second lactation, 150 days in milk and 60 days pregnant; `dim` and `dp` count model steps, so the same cow has different state coordinates at each resolution.
+<!-- /GEN -->
+
 <!-- GEN:state_counts -->
 State counts (month resolution): 2,970 states, of which 1,210 are reachable from the replacement state (the default is the full table), 9,040 transitions.
 <!-- /GEN -->
@@ -99,7 +114,8 @@ For a large herd the three agree on the mean; Monte Carlo is the slow one, so it
 | `src/cowmrp/domains/` | One folder per domain: `cow/` (parameters, states, probabilities, transitions, rewards, lookup tables, evidence, `farm.py`, `keepcull.py`, `projection.py`) and `youngstock/` |
 | `src/cowmrp/viz/`, `io/`, `data/` | Figures and dashboards, model-file export, the shipped example herd |
 | `runners/` | Scripts that use the package: one module per domain (`cow/`, `youngstock/`) with `run.py`, `checks/`, `plots/`, `outputs/<kind>/`; `_shared/` common code |
-| `examples/` | `whole_farm_example.py` |
+| `examples/` | Four runnable scripts (`whole_farm_example.py`, ...) |
+| `user_examples/` | Five example notebooks with their synthetic CSV files, a custom-domain folder and the installed-wheel test (`check_installed.py`); obtained from GitHub, not in the package |
 | `tests/` | Fast default suite plus opt-in `slow` and `install` tests (see `tests/README.md`) |
 | `guide/` | Documentation: the tutorial, a file guide and API reference built by `guide/build.py`, and the website in `guide/web/` |
 
@@ -197,12 +213,14 @@ pytest -m install         # builds the wheel and installs it in a clean virtual 
 ## Documentation
 
 The site is built from the code by `python guide/build.py` and published to GitHub Pages by `.github/workflows/guide.yml` when `src/`, `guide/`,
-`examples/`, `README.md` or `pyproject.toml` change on `main`.
+`examples/`, `user_examples/`, `README.md` or `pyproject.toml` change on `main`.
 
 ## License and citation
 
 Authors: Sumit Sharma (first author, primary developer), Edward Hansen and Miel Hostens (supervisor), Department of Animal Science, Cornell University, Ithaca, New York, USA.
-MIT, see `LICENSE`. Copyright (c) 2026 Bovi-analytics Lab, Sumit Sharma. How to cite: see `CITATION.cff` (a Zenodo DOI will be added after the first public release).
+CowMRP is released under the MIT licence (SPDX `MIT`), see `LICENSE`. Copyright (c) 2026 Bovi-analytics Lab, Cornell University. How to cite: see `CITATION.cff` (a Zenodo DOI will be added after the first public release).
+
+Third-party material keeps its own licence: the Computer Modern (CMU) web fonts bundled with the documentation theme (`guide/web/theme/fonts/`, not in the installed package) are under the SIL Open Font License 1.1, whose text (`OFL.txt`) is kept with them; the interactive dashboards embed plotly.js (MIT), which keeps its own notice in the generated files. Dependencies such as numpy, pandas, scipy, matplotlib, plotly and openpyxl are installed from PyPI under their own licences and are not redistributed here.
 
 ## Notes
 

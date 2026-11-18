@@ -139,7 +139,13 @@ write_farm_outputs(result, "farm_results")</code></pre>
 <p>The herd is carried forward with the model's own transition matrix and summarised by status (open / pregnant / dry), lactation, DIM stage and month in milk. Cows that have never been replaced
 are tracked separately from cows that entered through the replacement state. <code>result["values"]</code> holds per-cow values (<code>V</code>, <code>V_keep</code>,
 <code>replacement_value</code>, <code>pregnancy_value</code>); pass <code>values=False</code> to skip them. <code>write_farm_outputs</code> writes the CSV tables and two dashboards
-(<code>dashboard.html</code>, static; <code>dashboard_plotly.html</code>, interactive). The complete script is <code>examples/whole_farm_example.py</code>.</p>
+(<code>dashboard.html</code>, static; <code>dashboard_plotly.html</code>, interactive). The complete script is <code>examples/whole_farm_example.py</code>. Notebook versions that you can run on a CSV of your own (cows, farm projection, individual rewards, youngstock, and your own domain on the engine) are in the <code>user_examples/</code> folder of the <a href="https://github.com/Bovi-analytics/cow-mrp/tree/main/user_examples">GitHub repository</a>; they are not part of the installed package.</p>
+<figure><img src="assets/fig_farm_status.png" alt="Herd by reproductive status over time">
+<figcaption>Herd by reproductive status (Open, Pregnant, Dry) over 24 months, from <code>result["evolution"]["status"]</code> of the example herd.</figcaption></figure>
+<figure><img src="assets/fig_farm_origin.png" alt="Original herd and replacement animals over time">
+<figcaption>Original herd and replacement animals over the same 24 months (<code>result["regular"]</code>, <code>result["replaced"]</code>). Replaced is an origin, not a reproductive status.</figcaption></figure>
+<figure><img src="assets/fig_farm_lactation.png" alt="Herd by lactation number over time">
+<figcaption>Herd by lactation number (1, 2, 3, 4 or later) over the same 24 months, from <code>project_herd(..., groupers=["lactation_exact"])</code>.</figcaption></figure>
 <figure><img src="assets/F08_steady_state_herd.png" alt="Steady-state herd">
 <figcaption>The model's steady-state herd, from which the tutorial dataset is drawn (saved validation figure).</figcaption></figure>
 
@@ -153,10 +159,14 @@ are tracked separately from cows that entered through the replacement state. <co
 <p>For a large herd the sampled modes agree with <code>expected</code> on the mean and cost far more time, so nothing in the package runs them unless you select them.</p>
 
 <h2 id="units">8. Time resolution</h2>
-<p>The model steps in <code>month</code> (30 d, the default), <code>week</code> (7 d) or <code>day</code> (1 d). Set it before Python starts and keep it for the whole process:</p>
+<p>The model steps in <code>month</code> (30 d, the default), <code>week</code> (7 d) or <code>day</code> (1 d). This is a property of the model, not of the display: the resolution rebuilds the states, the transition probabilities (rescaled to the step), the reward of every state and therefore the expected values. Set it before Python starts and keep it for the whole process:</p>
 <pre><code>COW_TIME_UNIT=week python my_script.py        # PowerShell: $env:COW_TIME_UNIT="week"; python my_script.py</code></pre>
 <p>Dim and dp are model-step units, not calendar days; durations such as gestation stay in real days. Probabilities, rewards, discounting and exported labels all follow the one setting.
-A herd file made at one resolution is refused at another (state ids are not comparable). The day resolution has about 2.4 million transitions: use it on purpose.</p>
+A herd file made at one resolution is refused at another (state ids are not comparable); a raw file with days in milk and days pregnant in real days loads at any of them. The cow model at each resolution, measured when this page is built:</p>
+{{RESOLUTION_TABLE}}
+<p>The day resolution has {{DAY_NNZ}} transitions: use it on purpose.</p>
+<figure><img src="assets/fig_time_resolution.png" alt="Milk income of the same open cow at month, week and day resolution">
+<figcaption>Milk income of an open second-lactation cow at the three resolutions, read from each model's reward vector. Left: the reward a state earns in one step. Right: the same divided by the step length.</figcaption></figure>
 
 <h2 id="env">9. Environmental outputs</h2>
 <p>The physical quantities (enteric and manure methane, N2O, nitrogen balance, CO2) are always computed from the animal's state by <code>cowmrp.domains.cow.rewards.environment.compute_environment</code>
@@ -183,6 +193,7 @@ python runners/cow/checks/verify_farm.py            # the farm layer; more verif
 <tr><td><code>src/cowmrp/viz/</code></td><td>projection figures, farm dashboards</td></tr>
 <tr><td><code>runners/</code></td><td>scripts that use the package; outputs under <code>runners/&lt;module&gt;/outputs/</code></td></tr>
 <tr><td><code>examples/</code></td><td>four runnable scripts: <code>cow_comparison_example.py</code>, <code>keep_cull_example.py</code>, <code>whole_farm_example.py</code>, <code>youngstock_example.py</code></td></tr>
+<tr><td><code>user_examples/</code></td><td>five notebooks with their CSV files and a custom-domain folder, obtained from GitHub (not in the package)</td></tr>
 </table>
 <p>The <a href="files.html">file guide</a> describes every file and the <a href="api/index.html">API reference</a> every function.</p>
 </main>

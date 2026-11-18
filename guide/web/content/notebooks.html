@@ -1,0 +1,47 @@
+<h2 id="notebooks">Examples and downloads</h2>
+<p class="note"><b>Download.</b> <a href="{{REPO_URL}}/archive/refs/heads/main.zip">Download the repository as a ZIP</a> (it contains <code>user_examples/</code>), <a href="{{REPO_URL}}/tree/main/user_examples">browse the examples folder on GitHub</a>, or see below for <code>git clone</code>. The notebooks are <b>examples, not limits</b>: CowMRP supports monthly, weekly and daily resolution and your own domains, and you can write your own notebooks and workflows with it.</p>
+<p>Five Jupyter notebooks show how to use CowMRP after <code>pip install</code>. They import only from the installed package, and each one starts with an install cell. Open one, run the cells from top to bottom, then replace the example CSV file with your own data. The notebooks, their data files and the custom-domain folder live together in the <code>user_examples/</code> folder of the GitHub repository; they are not part of the Python package.</p>
+
+<h3 id="get-notebooks">1. Get the examples</h3>
+<p>Either of these gives you the folder; use the one you prefer.</p>
+<pre><code># the whole repository
+git clone {{REPO_URL}}.git
+cd cow-mrp/user_examples
+
+# or only the examples folder
+git clone --depth 1 --filter=blob:none --sparse {{REPO_URL}}.git
+cd cow-mrp
+git sparse-checkout set user_examples
+cd user_examples</code></pre>
+<p>Without Git: open <a href="{{REPO_URL}}">the repository</a> on GitHub, choose <i>Code</i> and <i>Download ZIP</i>, unpack it and open the <code>user_examples</code> folder. Keep the whole folder together: the notebooks read <code>data/...</code> next to themselves, and notebook 5 reads <code>custom_domain/</code>.</p>
+
+<h3 id="install-notebooks">2. Install and open</h3>
+<pre><code>pip install "cowmrp[plot,excel]"
+pip install notebook
+jupyter notebook</code></pre>
+<p>The <code>plot</code> extra installs Plotly and Matplotlib (figures and the interactive dashboards); the <code>excel</code> extra installs openpyxl (the keep/cull Excel workbook that notebook 1 points to). The notebooks themselves use Plotly. The base package alone is enough for the calculations. Use a new virtual environment if you can.</p>
+
+<h3 id="the-five">3. The five notebooks</h3>
+<table>
+<tr><th>Notebook</th><th>What it shows</th><th>You replace</th></tr>
+{{NOTEBOOK_ROWS}}
+</table>
+<p>The same table is in <code>user_examples/README.md</code>, which is the source of this list. Each notebook also exists as a plain Python script (<code>01_cow_csv_keepcull.py</code> and so on) with the same code.</p>
+
+<h3 id="own-data">4. Use your own farm</h3>
+<p><b>Cows (notebooks 1 to 3).</b> A CSV with one row per cow and the columns <code>lactation</code> (1 to 10), <code>dim_days</code> (days in milk), <code>dp_days</code> (days pregnant, 0 if open) and optionally <code>cow_id</code>. Set <code>HERD_CSV</code> to your file. The loader maps each cow to a model state from these three numbers; a cow it cannot map is listed, never dropped silently. If you do not set a file, the example herd is used.</p>
+<p><b>Young stock (notebook 4).</b> A CSV with <code>stage</code> (CALF, HEIFER, BREEDING or PREGNANT), <code>age_months</code> and <code>dp_months</code>.</p>
+<p><b>Defaults and settings.</b> Everything you do not set uses its default. In notebook 1 you list only the economic settings you want to change in <code>MY_SETTINGS</code>; the notebook prints every setting that can be changed (see also the <a href="defaults.html">Defaults</a> page).</p>
+<p><b>Domain and time resolution.</b> The cow notebooks use the <code>"cow"</code> domain (<code>build_model("cow")</code>) and the youngstock notebook uses <code>"youngstock"</code>. Month is the default time resolution. To use week or day, set <code>COW_TIME_UNIT</code> to <code>week</code> or <code>day</code> before the first import of <code>cowmrp</code>, as the notebooks show; one resolution per Python session, and day resolution is very large (see <a href="getting-started.html">Getting started</a>).</p>
+<p><b>Limits.</b> The model sees only lactation, days in milk and days pregnant of each cow. <code>dp_days</code> can be left out of the file (then every cow is treated as open), and the table shows the day value of the model state a cow was mapped to. The example CSV is month-binned synthetic data: at week or day resolution some of its cows have no state, and the loader stops and lists them. Keep/cull does not credit the salvage value of a sale; your offer is that credit. The youngstock domain has no rewards, no values and no keep/cull, and notebook 4 needs month resolution. Values in notebook 2 are expected cows, not a forecast of individual animals. </p>
+<p><b>Daily resolution.</b> The CowMRP package supports monthly, weekly and daily resolution. The five notebooks are illustrative examples, not limits of the package: you can build your own daily-resolution workflows, with cow data that is compatible with the daily state rules. The bundled 1,000-cow CSV is intended for monthly resolution and does not map completely at daily resolution (28 cows have no state). The complete example notebooks have not been verified at daily resolution, and daily runtime and memory requirements (about 2 million cow states) have not been benchmarked. The youngstock notebook is limited to monthly resolution because its CSV has ages in months.</p>
+<div class="note"><b>Synthetic data.</b> <code>data/cows_1000.csv</code> (1,000 cows sampled from a herd that an earlier version of CowMRP generated from its own model) and <code>data/youngstock_500.csv</code> (random, fixed seed) are synthetic. They contain no real animals and are there to show the file format.</div>
+
+<h3 id="custom-domain">5. Your own domain on the generic engine</h3>
+<p>The MRP engine (<code>cowmrp.mrp</code>) contains no cow knowledge. It needs a <b>domain</b>: a Python package, a folder whose name is the domain name, with <code>parameters.py</code> (<code>TIME_UNIT</code>, <code>UNIT_DAYS</code>), <code>states.py</code> (<code>build_&lt;name&gt;_states()</code>, a table with a <code>state_id</code> column), <code>probabilities.py</code> (<code>compute_probabilities</code>), <code>transitions.py</code> (<code>compute_transitions</code>, the non-zero entries of the matrix) and, if you want values, <code>rewards.py</code> (<code>compute_rewards</code>, including a <code>total</code>). Optional hooks go in <code>notebook_hooks.py</code>. Put the folder on <code>sys.path</code> and call <code>build_model("&lt;name&gt;")</code>: the engine builds the states, the probabilities, the transition matrix (and checks that every row sums to 1) and the reward vector, and <code>evaluate</code> solves the state values. <code>validate_domain</code> lists missing pieces first.</p>
+<p>Notebook 5 does this with a toy insemination model in <code>user_examples/custom_domain/insemination/</code>, whose <code>README.md</code> lists the interface rules. Its numbers are illustrative, not biological or economic estimates. Copy the folder, rename it and edit the files to model your own process.</p>
+
+<h3 id="not-in-package">Where the files are</h3>
+<p>The installed package (<code>pip install cowmrp</code>) contains the engine, the domains, the plotting helpers and a small tutorial herd. The <code>user_examples/</code> notebooks, scripts, CSV files and the custom-domain folder are obtained separately from the GitHub repository, as described above; they are not in the wheel or in the source distribution. The same folder holds <code>check_installed.py</code>, which builds the wheel, installs it into a clean virtual environment and runs every notebook there, so that the notebooks are tested against the installed package.</p>
+
+<h2 id="scripts">Python scripts</h2>

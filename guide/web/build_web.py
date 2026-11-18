@@ -18,6 +18,7 @@ SINGLE SOURCES (nothing is copied by hand; rebuild and every page follows)
 If an example script changes and --examples was not run, the build stops (the stored output would no longer match the code).
 """
 import contextlib
+import glob
 import hashlib
 import html
 import io
@@ -47,18 +48,24 @@ EXAMPLES = [
      "fig_cow_comparison.png", "Cumulative expected discounted reward of the two cows over 24 months (the last point is the value printed above)."),
     ("keep-cull", "Keep or cull", "examples/keep_cull_example.py",
      "For every cow of the example herd the table gives the break-even sale value at 1-, 3- and 5-year horizons. At an offer of 900 USD a cow is flagged CULL when the offer exceeds her value. "
-     "The offer is an input you choose; no sale price is built into the model.",
+     "The offer is an input you choose; no sale price is built into the model. The last lines repeat the table under a different rearing cost, to show how a default is overridden for one block of code (see <a href=\"defaults.html\">Defaults</a>).",
      "fig_keepcull.png", "Break-even value of the 200 example cows at the 3-year horizon, and the offer used above."),
     ("whole-herd", "Project a whole herd", "examples/whole_farm_example.py",
      "Load the herd, carry it 24 months forward with the exact expected distribution, rank the cows by keep/cull value and write the tables and dashboards. "
      "Replace the herd file by your own records to run it on your farm.",
-     "fig_farm_status.png", "Cows by status now and after 24 months (expected number of cows, from <code>result['distribution_summary']</code>)."),
+     [("fig_farm_status.png", "Figure 1. The herd by reproductive status (Open, Pregnant, Dry) over the 24 months: the expected number of cows in each status after every step, from "
+                              "<code>result['evolution']['status']</code>. The three bands always add up to the whole herd."),
+      ("fig_farm_origin.png", "Figure 2. Where the animals come from: cows of the original herd still in the herd, and replacement animals that entered through the replacement state since today "
+                              "(<code>result['regular']</code> and <code>result['replaced']</code>). Replaced is an origin, not a reproductive status: a replacement heifer is Open, Pregnant or Dry like any other cow."),
+      ("fig_farm_lactation.png", "Figure 3. The lactation structure of the herd: expected cows in lactation 1, 2, 3 and 4 or later after every step, from the model's exact-lactation grouping "
+                                 "(<code>project_herd(..., groupers=['lactation_exact'])</code>, lactations 4 to 10 added together). Cows move up a lactation at calving, leave through the replacement state, and replacements enter in lactation 1.")], ""),
     ("youngstock", "Youngstock", "examples/youngstock_example.py",
      "The calf, heifer and first-calving chain is a second domain on the same engine. Starting from the newborn calf, the probability of being in each stage is carried forward month by month.",
      "fig_youngstock.png", "Probability of each stage for a newborn calf, months 0 to 36."),
 ]
 QUICKSTART = os.path.join(CONTENT, "quickstart.py")
-NAV = [("Home", "index.html"), ("Getting started", "getting-started.html"), ("Examples", "examples.html"), ("Tutorial", "tutorial.html"),
+TIME_RESOLUTION = os.path.join(CONTENT, "time_resolution.py")
+NAV = [("Home", "index.html"), ("Getting started", "getting-started.html"), ("Examples", "examples.html"), ("Tutorial", "tutorial.html"), ("Defaults", "defaults.html"),
        ("API", "api/index.html"), ("Science", "science.html"), ("Methods", "methods.html"), ("Provenance", "provenance.html"), ("Cite", "cite.html")]
 API_MODULES = ["cowmrp.mrp", "cowmrp.model", "cowmrp.domain", "cowmrp.io", "cowmrp.viz", "cowmrp.data", "cowmrp.domains.cow", "cowmrp.domains.youngstock"]
 # --- API pages: long module-level values --------------------------------------------------------------------------------------------------
@@ -353,6 +360,14 @@ def run_examples():
                 shutil.copy2(os.path.join(tmp, "farm_example_output", "dashboard.html"), os.path.join(OUT, "farm_dashboard.html"))
         manifest[eid] = sha(path)
         print(f"ran {eid}")
+    for u in sync.RESOLUTIONS:                      # the same script at each resolution (one process, one resolution)
+        r = subprocess.run([sys.executable, TIME_RESOLUTION], env=dict(env_with_src(), COW_TIME_UNIT=u), capture_output=True, text=True, encoding="utf8")
+        if r.returncode != 0:
+            sys.exit(f"time_resolution ({u}) failed: {r.stderr[-2000:]}")
+        lines = [l for l in r.stdout.splitlines() if "independent variables" not in l and "sum to 1" not in l]
+        write(os.path.join(OUT, f"time-resolution-{u}.txt"), "\n".join(lines) + "\n")
+    manifest["time-resolution"] = sha(TIME_RESOLUTION)
+    print("ran time-resolution (month, week, day)")
     make_figures()
     write(os.path.join(OUT, "manifest.json"), json.dumps(manifest, indent=1))
 
@@ -397,13 +412,51 @@ def make_figures():
 
     with quiet:
         result = project_herd(herd, model, mode="expected", steps=24)
-    s = result["distribution_summary"].query("grouper == 'status'")
-    fig, ax = plt.subplots(figsize=(7, 3.4))
-    x = np.arange(len(s)); w = .38
-    ax.bar(x - w / 2, s["current"], w, color=GREY, label="now")
-    ax.bar(x + w / 2, s["predicted"], w, color=GREEN, label="after 24 months")
-    ax.set_xticks(x); ax.set_xticklabels(s["label"]); ax.set_ylabel("cows"); ax.legend(frameon=False)
+    from cowmrp.viz.farm import STATUS_COLORS, STATUS_ORDER
+    from cowmrp.domains.cow.parameters import TIME_UNIT
+    xlabel = f"{TIME_UNIT}s elapsed"
+    steps = result["steps"]
+    ev = pd.DataFrame(result["evolution"]["status"]).fillna(0.0).reindex(columns=STATUS_ORDER, fill_value=0.0)          # whole herd by reproductive status, one row per step
+    fig, ax = plt.subplots(figsize=(7, 3.6))
+    ax.stackplot(ev.index, *[ev[c] for c in STATUS_ORDER], labels=STATUS_ORDER, colors=[STATUS_COLORS[c] for c in STATUS_ORDER])
+    ax.set_xlim(0, steps); ax.set_ylim(0, float(ev.iloc[0].sum()))
+    ax.set_title("Herd by reproductive status over time"); ax.set_xlabel(xlabel); ax.set_ylabel("cows"); ax.legend(loc="lower left", frameon=True, fontsize=8)
     fig.tight_layout(); fig.savefig(os.path.join(OUT, "fig_farm_status.png")); plt.close(fig)
+
+    reg = pd.DataFrame(result["regular"]).fillna(0.0).sum(axis=1)               # original herd: cows never replaced since today
+    rep_ = pd.DataFrame(result["replaced"]).fillna(0.0).sum(axis=1)             # animals that entered through the replacement state
+    fig, ax = plt.subplots(figsize=(7, 3.6))
+    ax.stackplot(reg.index, reg, rep_, labels=["Original herd (never replaced)", "Replacement animals (entered since today)"], colors=["#95a5a6", STATUS_COLORS["Replaced"]])
+    ax.set_xlim(0, steps); ax.set_ylim(0, float(reg.iloc[0] + rep_.iloc[0]))
+    ax.set_title("Original herd and replacement animals over time"); ax.set_xlabel(xlabel); ax.set_ylabel("cows"); ax.legend(loc="lower left", frameon=True, fontsize=8)
+    fig.tight_layout(); fig.savefig(os.path.join(OUT, "fig_farm_origin.png")); plt.close(fig)
+
+    with quiet:
+        by_lac = project_herd(herd, model, mode="expected", steps=steps, values=False, groupers=["lactation_exact"])     # the model's own exact-lactation grouping
+    lac = pd.DataFrame(by_lac["evolution"]["lactation_exact"]).fillna(0.0)
+    four = pd.DataFrame({"Lactation 1": lac["Lac 01"], "Lactation 2": lac["Lac 02"], "Lactation 3": lac["Lac 03"], "Lactation 4+": lac[[c for c in lac.columns if c >= "Lac 04"]].sum(axis=1)})
+    fig, ax = plt.subplots(figsize=(7, 3.6))
+    ax.stackplot(four.index, *[four[c] for c in four.columns], labels=list(four.columns), colors=["#d3e6dc", "#98c5ad", "#4f9a78", "#1f5a40"])
+    ax.set_xlim(0, steps); ax.set_ylim(0, float(four.iloc[0].sum()))
+    ax.set_title("Herd by lactation number over time"); ax.set_xlabel(xlabel); ax.set_ylabel("cows"); ax.legend(loc="lower left", frameon=True, fontsize=8)
+    fig.tight_layout(); fig.savefig(os.path.join(OUT, "fig_farm_lactation.png")); plt.close(fig)
+
+    # the same open second-lactation cow curve at the three resolutions, from the model built at each one (guide/sync.py resolution_facts)
+    res = sync.resolution_facts()
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.7))
+    for ax, per_day, title in ((axes[0], False, "Reward earned in one step"), (axes[1], True, "The same reward per day")):
+        for u, col, lw in (("month", AMBER, 2.2), ("week", GREEN, 1.8), ("day", BLUE, 1.4)):
+            d = res[u]; U = d["unit_days"]
+            x = (np.array(d["curve"]["dim_step"]) + 1) * U                     # a state with dim = k is, on average, (k + 1) steps into the lactation
+            y = np.array(d["curve"]["milk_income"]) / (U if per_day else 1)
+            keep = x <= 300
+            if u == "day":
+                ax.plot(x[keep], y[keep], color=col, lw=lw, label=f"day (1-d step, {d['states']:,} states)")
+            else:
+                ax.step(x[keep], y[keep], where="mid", color=col, lw=lw, label=f"{u} ({U}-d step, {d['states']:,} states)")
+        ax.set_title(title); ax.set_xlabel("days in milk"); ax.set_ylabel("milk income per day (USD)" if per_day else "milk income per step (USD)"); ax.set_xlim(0, 300)
+    axes[0].legend(frameon=False, fontsize=8)
+    fig.tight_layout(); fig.savefig(os.path.join(OUT, "fig_time_resolution.png")); plt.close(fig)
 
     with quiet:
         dom = load_domain("youngstock"); ym = build_model(dom)
@@ -418,7 +471,7 @@ def make_figures():
     ax.set_xlim(0, 36); ax.set_ylim(0, 1); ax.set_xlabel("months since birth"); ax.set_ylabel("probability")
     ax.legend(frameon=False, ncol=3, fontsize=8, loc="upper center", bbox_to_anchor=(.5, -.2))
     fig.tight_layout(); fig.savefig(os.path.join(OUT, "fig_youngstock.png")); plt.close(fig)
-    print("made 4 figures")
+    print("made 7 figures")
 
 
 HAS_LOGO = True
@@ -456,7 +509,7 @@ def check_outputs_current():
     if not os.path.exists(mf):
         sys.exit("no saved example output yet: run  python guide/web/build_web.py --examples")
     saved = json.load(open(mf))
-    jobs = [("quickstart", QUICKSTART)] + [(eid, os.path.join(ROOT, script)) for eid, _, script, *_ in EXAMPLES]
+    jobs = [("quickstart", QUICKSTART), ("time-resolution", TIME_RESOLUTION)] + [(eid, os.path.join(ROOT, script)) for eid, _, script, *_ in EXAMPLES]
     stale = [eid for eid, p in jobs if saved.get(eid) != sha(p)]
     if stale:
         sys.exit(f"example script(s) changed since the output was saved: {', '.join(stale)}. Run  python guide/web/build_web.py --examples")
@@ -491,6 +544,25 @@ def outline_of(body):
     return f'<aside class="outline"><b>On this page</b>{links}</aside>'
 
 
+def repo_url():
+    """The repository address, read from CITATION.cff (repository-code): the one place that names it."""
+    return re.search(r'^repository-code:\s*"?([^"\s]+)', read(os.path.join(ROOT, "CITATION.cff")), flags=re.M).group(1).rstrip("/")
+
+
+def notebook_rows_html(repo):
+    """Table rows of the notebook list, read from the table in user_examples/README.md (the source of truth) so that the page follows the examples.
+    Stops if a notebook file is missing from that table or the table lists a notebook that does not exist."""
+    readme = read(os.path.join(ROOT, "user_examples", "README.md"))
+    rows = re.findall(r"^\|\s*`(\d\d_\w+)\.ipynb`\s*\|(.+?)\|(.+?)\|\s*$", readme, flags=re.M)
+    listed = [r[0] for r in rows]
+    on_disk = sorted(os.path.basename(f)[:-6] for f in glob.glob(os.path.join(ROOT, "user_examples", "[0-9][0-9]_*.ipynb")))
+    if sorted(listed) != on_disk:
+        sys.exit(f"user_examples/README.md notebook table {sorted(listed)} does not match the notebooks on disk {on_disk}")
+    code = lambda t: re.sub(r"`([^`]+)`", r"<code>\1</code>", html.escape(t.strip(), quote=False))
+    rows_html = [f'<tr><td><a href="{repo}/blob/main/user_examples/{n}.ipynb"><code>{n}</code></a></td><td>{code(w)}</td><td>{code(i)}</td></tr>' for n, w, i in rows]
+    return "\n".join(rows_html)
+
+
 def page(title, body, active, desc="", wide=False):
     outline = "" if wide else outline_of(body)
     cls = "page wide" if (wide or not outline) else "page"
@@ -518,30 +590,39 @@ def model_numbers():
 
 
 def stats_html(n):
-    items = [(n["CO_STATES"], "cow states (month resolution)"), (n["CO_NNZ"], "cow transitions"), ("3", "time resolutions: month, week, day"),
-             ("3", "simulation modes: expected, stochastic, Monte Carlo"), (n["YS_STATES"], "youngstock states")]
-    return "".join(f'<div class="stat"><b>{a}</b><span>{b}</span></div>' for a, b in items)
+    f = sync.facts()                                     # the three resolutions are measured by guide/resolution_worker.py (cached), never typed by hand
+
+    def trio(key, label, prefix=""):
+        cells = "".join(f"<div><b>{f[prefix + u + '_' + key]}</b><i>{u.lower()}</i></div>" for u in ("MONTH", "WEEK", "DAY"))
+        return f'<div class="stat multi"><span class="lab">{label}</span><div class="trio">{cells}</div></div>'
+    items = [("3", "time resolutions: month, week, day"), ("3", "simulation modes: expected, stochastic, Monte Carlo")]
+    one = "".join(f'<div class="stat"><b>{a}</b><span>{b}</span></div>' for a, b in items)
+    return (trio("STATES", "cow states by time resolution") + trio("NNZ", "cow transitions by time resolution") + one
+            + trio("STATES", "youngstock states by time resolution", "YS_") + trio("NNZ", "youngstock transitions by time resolution", "YS_"))
 
 
 def build_pages(nums):
     pages = {}
-    home = fill(read(os.path.join(CONTENT, "home.html")), {"STATS": stats_html(nums)})
+    home = fill(sync.fill_tokens(read(os.path.join(CONTENT, "home.html"))), {"STATS": stats_html(nums)})
     pages["index.html"] = page("CowMRP", home, "Home", "Markov reward process models of dairy cattle: a Python package.")
 
-    gs = fill(read(os.path.join(CONTENT, "getting-started.html")),
-              {"CODE": code_block(read(QUICKSTART)), "OUT": code_block(read(os.path.join(OUT, "quickstart.txt")), "out")})
+    gs = fill(sync.fill_tokens(read(os.path.join(CONTENT, "getting-started.html"))),
+              {"CODE": code_block(read(QUICKSTART)), "OUT": code_block(read(os.path.join(OUT, "quickstart.txt")), "out"),
+               "TR_CODE": code_block(read(TIME_RESOLUTION)), **{"TR_" + u.upper(): code_block(read(os.path.join(OUT, f"time-resolution-{u}.txt")), "out") for u in sync.RESOLUTIONS}})
     pages["getting-started.html"] = page("Getting started", gs, "Getting started", "Install cowmrp and run a whole farm.")
 
-    ex = ['<p class="eyebrow">Examples</p><h1>Runnable examples</h1>'
-          '<p class="lead">Four complete scripts from the <code>examples/</code> folder. The code is the file itself and the output is what it printed when the site was built.</p>']
+    ex = ['<p class="eyebrow">Examples</p><h1>Examples</h1>'
+          '<p class="lead">Five notebooks to start from (with a download link for the whole <code>user_examples/</code> folder), then four complete scripts from the <code>examples/</code> folder. For the scripts, the code is the file itself and the output is what it printed when the site was built.</p>',
+          fill(read(os.path.join(CONTENT, "notebooks.html")), {"REPO_URL": repo_url(), "NOTEBOOK_ROWS": notebook_rows_html(repo_url())})]
     for eid, title, script, what, fig, caption in EXAMPLES:
         src = read(os.path.join(ROOT, script)); out = read(os.path.join(OUT, eid + ".txt"))
+        figs = "".join(f'<figure><img src="assets/{f}" alt="{html.escape(title)}"><figcaption>{c}</figcaption></figure>' for f, c in (fig if isinstance(fig, list) else [(fig, caption)]))
         extra = ""
         if eid == "whole-herd":
             extra = '<p>The script also writes CSV tables and two dashboards. <a href="dashboard-example.html">Open the static dashboard it produced</a>.</p>'
         ex.append(f'<h2 id="{eid}">{title}</h2><p>{what}</p><p class="cap">{script}</p>{code_block(strip_docstring(src))}<p class="cap">Output</p>{code_block(out, "out")}'
-                  f'<figure><img src="assets/{fig}" alt="{html.escape(title)}"><figcaption>{caption}</figcaption></figure>{extra}')
-    pages["examples.html"] = page("Examples", "".join(ex), "Examples", "Runnable examples: cow comparison, keep/cull, whole herd, youngstock.")
+                  f'{figs}{extra}')
+    pages["examples.html"] = page("Examples", "".join(ex), "Examples", "Five Jupyter notebooks (cows from a CSV, farm projection, individual rewards, youngstock, your own domain) and four runnable scripts.")
 
     tut = sync.fill_tokens(read(os.path.join(GUIDE, "tutorial.html")))
     main = re.search(r"<main>(.*?)</main>", tut, flags=re.S).group(1)
@@ -551,13 +632,19 @@ def build_pages(nums):
         sys.exit("tutorial still links to the internal file guide")
     pages["tutorial.html"] = page("Tutorial", main, "Tutorial", "Step-by-step use of the cowmrp package.")
 
-    sci = fill(read(os.path.join(CONTENT, "science.html")), {k: nums[k] for k in ("CO_STATES", "CO_NNZ", "YS_STATES", "YS_NNZ")})
+    sci = fill(sync.fill_tokens(read(os.path.join(CONTENT, "science.html"))), {k: nums[k] for k in ("CO_STATES", "CO_NNZ", "YS_STATES", "YS_NNZ")})
     pages["science.html"] = page("Scientific background", sci, "Science", "What the model is: states, time, rewards and the keep/replace comparison.")
+    pages["defaults.html"] = page("Defaults", defaults_body(), "Defaults", "The default values of CowMRP, which can be changed for one run, how, and what stays fixed.")
     pages["methods.html"] = page("Methods and sources", methods_body(), "Methods", "Published methods, inputs, equations, assumptions and limitations of the environmental quantities.")
     pages["provenance.html"] = page("Parameters and provenance", provenance_body(), "Provenance", "Sources, evidence, assumptions and rules behind the cow and youngstock parameters.")
     pages["keepcull-workbook.html"] = page("Keep/cull workbook", keepcull_workbook_body(), "Science", "The Excel keep/cull accounting workbook: terms, columns, formulas, assumptions and limits.")
     pages["cite.html"] = page("Cite", cite_body(), "Cite", "How to cite cowmrp and its licence.")
     return pages
+
+
+def defaults_body():
+    """The defaults page: hand-written explanation plus the economic settings table, read from the package."""
+    return sync.fill_tokens(read(os.path.join(CONTENT, "defaults.html")))
 
 
 def keepcull_workbook_body():

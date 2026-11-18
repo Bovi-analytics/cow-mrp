@@ -18,18 +18,33 @@
 <h2 id="overview">Overview</h2>
 <p>A Markov reward process (MRP) is a list of states, the probability of moving from each state to each other state in one step, and a reward earned in each state.
 From those three things you get the expected value of a cow, how a herd is spread over states as time passes, and what replacing a cow is worth.
-In CowMRP the cow is described by three variables only, <code>(lactation, days in milk, days pregnant)</code>, and every probability and reward is a separate, documented module you can read and change.</p>
+In CowMRP the cow is described by three variables only, <code>(lactation, days in milk, days pregnant)</code>, counted in steps of a time resolution you choose (month, week or day), and every probability and reward is a separate, documented module you can read and change.</p>
 <p>It is written for researchers, graduate students and advisers who want to ask keep-or-replace and herd-projection questions of a model they can inspect, and for developers who want to build another animal domain on the same engine.</p>
 <figure><img src="assets/F08_steady_state_herd.png" alt="Steady-state herd of the cow model">
 <figcaption><b>The model's steady-state herd.</b> The tutorial herd of 200 synthetic cows is drawn from this distribution (saved validation figure).</figcaption></figure>
 
+<h2 id="resolution">Choose the time resolution</h2>
+<p>The time step is a setting of the model: <b>monthly (30 days), weekly (7 days) or daily (1 day)</b>. It is not a display option. One setting, <code>COW_TIME_UNIT</code>, rebuilds the model for the step you choose:</p>
+<ul>
+<li><b>States.</b> The same biological cow is a different, finer or coarser, state: the number of states grows from the thousands to millions.</li>
+<li><b>Transition probabilities.</b> Monthly rates are rescaled to the length of one step, so a weekly or daily step has its own transition matrix.</li>
+<li><b>State rewards.</b> The reward of a state is the rate (milk income, feed, reproduction costs and so on) integrated over the real days that one step spans, so a monthly state earns roughly thirty times a daily one.</li>
+<li><b>Values.</b> Expected values, herd projections and keep/cull comparisons are computed on that model; a finer step resolves events inside a month that a coarser step averages.</li>
+</ul>
+{{RESOLUTION_TABLE}}
+<p><code>dim</code> and <code>dp</code> are therefore <b>step indices of the chosen resolution</b>, not calendar days: the example cow (second lactation, 150 days in milk, 60 days pregnant) is state <code>(2, 4, 2)</code> at month resolution and <code>(2, 149, 60)</code> at day resolution. Durations such as the length of gestation stay in real days. The numbers in the table are measured from the three models when this page is built.</p>
+<figure><img src="assets/fig_time_resolution.png" alt="Milk income of the same open cow at month, week and day resolution">
+<figcaption><b>The same biology at three resolutions.</b> Milk income of an open second-lactation cow by days in milk, read from the reward vector of each model. Left: the reward a state earns in one step (a monthly state stands for 30 days, so its reward is larger). Right: the same rewards divided by the step length: the three models describe one lactation curve at different grain.</figcaption></figure>
+<p>See <a href="getting-started.html#resolution">Getting started</a> for the same script run at all three resolutions, and the <a href="tutorial.html#units">tutorial</a> for what to watch for (a herd file is tied to its resolution; the day model is large).</p>
+
 <h2 id="capabilities">What you can do</h2>
 <div class="cards">
+<a class="card" href="examples.html#notebooks"><b>Example notebooks</b><span>Five Jupyter notebooks to start from: your cows from a CSV, a farm projection, rewards, youngstock, and your own domain on the engine.</span></a>
 <a class="card" href="examples.html#cow-comparison"><b>Compare two cows</b><span>Project an open and a pregnant cow forward and compare their expected value over time.</span></a>
 <a class="card" href="examples.html#keep-cull"><b>Keep or cull</b><span>The break-even sale value of every cow: keep, replace, and their difference, kept apart.</span></a>
 <a class="card" href="examples.html#whole-herd"><b>Project a herd</b><span>Load your own records, carry the herd forward, and write tables and dashboards.</span></a>
 <a class="card" href="examples.html#youngstock"><b>Youngstock</b><span>The calf, heifer and first-calving chain, as a second domain on the same engine.</span></a>
-<a class="card" href="science.html#time"><b>Three time resolutions</b><span>Month, week or day steps; one setting carries through states, probabilities, rewards and outputs.</span></a>
+<a class="card" href="#resolution"><b>Three time resolutions</b><span>Month (30 d), week (7 d) or day (1 d): the state space, probabilities, state rewards and values are all rebuilt for the one you choose.</span></a>
 <a class="card" href="science.html#modes"><b>Expected, stochastic or Monte Carlo</b><span>The exact distribution by default; sampled paths and Monte Carlo when you ask for them.</span></a>
 </div>
 

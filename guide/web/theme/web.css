@@ -26,11 +26,11 @@ code,pre,kbd{font-family:var(--mono)}
 .brand:hover{text-decoration:none}
 .nav{display:flex;gap:2px;overflow-x:auto;flex:1;scrollbar-width:none}
 .nav::-webkit-scrollbar{display:none}
-.nav a{color:var(--mut);padding:6px 11px;border-radius:6px;font-size:1rem;white-space:nowrap}
+.nav a{color:var(--mut);padding:6px 9px;border-radius:6px;font-size:1rem;white-space:nowrap}
 .nav a:hover{color:var(--fg);background:var(--soft);text-decoration:none}
 .nav a.on{color:var(--acc);font-weight:600}
 .tools{display:flex;align-items:center;gap:8px;margin-left:auto}
-#q{width:170px;font:inherit;font-size:.95rem;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+#q{width:120px;font:inherit;font-size:.95rem;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
 #q:focus{outline:2px solid var(--acc);outline-offset:0}
 #theme{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--bg);color:var(--mut);border-radius:6px;padding:5px 9px;cursor:pointer}
 #theme:hover{color:var(--fg)}
@@ -88,6 +88,12 @@ figcaption{color:var(--mut);font-size:.88rem;margin-top:.45em;max-width:74ch}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:14px;margin:1.6em 0 .6em;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .stat b{display:block;font-size:1.65rem;color:var(--fg);line-height:1.1;font-variant-numeric:tabular-nums}
 .stat span{font-size:.84rem;color:var(--mut)}
+.stat.multi{grid-column:span 2}
+.stat.multi .lab{display:block;margin-bottom:4px}
+.trio{display:flex;gap:18px;flex-wrap:wrap}
+.trio b{font-size:1.25rem}
+.trio i{display:block;font-style:normal;font-size:.78rem;color:var(--mut)}
+@media(max-width:520px){.stat.multi{grid-column:span 1}}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:1.2em 0}
 .card{display:block;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:14px 16px;color:var(--fg)}
 .card:hover{border-color:var(--acc);text-decoration:none}

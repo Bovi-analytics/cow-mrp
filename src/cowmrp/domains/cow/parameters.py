@@ -147,8 +147,9 @@ CONCEPTION_RATE_PROVENANCE = {
             "breeding to conception, a per-lactation cumulative metric."
         ),
         (
-            "Fodor A, et al. (2019). \"Pregnancy and conception rates by "
-            "parity.\" Canadian Journal of Veterinary Research 83(3):"
+            "Fodor I, Gabor G, Lang Z, Abonyi-Toth Z, Ozsvari L (2019). \"Relationship "
+            "between reproductive management practices and fertility in primiparous "
+            "and multiparous dairy cows.\" Canadian Journal of Veterinary Research 83(3):"
             "218-227. 23,781 cows, 34 large Hungarian Holstein-Friesian "
             "herds: first-service conception "
             "risk 24.8% (primiparous, n=9,346) vs 17.3% (multiparous, "
@@ -771,7 +772,8 @@ CONCEPTION_PARITY_ODDS_RATIO = {1: 1.00, 2: 0.68, 3: 0.47}
 ABORTION_PARITY_RELATIVE_RISK = {1: 0.81, 2: 0.96, 3: 1.23}
 
 # Gestation length spread: Mwangi et al. (2025) J Dairy Sci 108:8685, 9,750 gestations of 4,256 dairy cows,
-# SD 5.87 d (raw 5.89 d), 92.5 % of gestations 270-290 d; Holstein-Friesian-sired calves 277.3 d, parity 2..12 means
+# SD 5.87 d (raw 5.89 d) and 92.5 % of gestations 270-290 d, both for the whole data set (all sire breeds, mean 280.6 d);
+# the paper gives no SD for Holstein-Friesian-sired calves alone (mean 277.3 d); parity 2..12 means
 # 278.4-279.8 d. The MEAN stays GESTATION_LENGTH_DAYS; the SD is used only by the 'model' method of the calving spec
 # (the default 'table' keeps the deterministic trigger).
 GESTATION_LENGTH_SD_DAYS = 5.9

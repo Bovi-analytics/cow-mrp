@@ -18,13 +18,27 @@ pip install -e ".[dev,plot,parquet]"        # from a clone of the source reposit
 {{OUT}}
 <p>The <code>current</code> column is the number of cows in each status today; <code>predicted</code> is the expected number after 24 months, including cows that were culled and replaced along the way.</p>
 
+<h2 id="resolution">Choose the time resolution</h2>
+<p>The model can run at a monthly (30-day), weekly (7-day) or daily (1-day) step. Set <code>COW_TIME_UNIT</code> before Python starts. The script below builds the cow model and looks up one cow, second lactation, 150 days in milk and 60 days pregnant, so you can see what changes: the number of states and transitions, the cow's own <code>(lactation, dim, dp)</code> coordinates, and the reward her state earns per step and per day.</p>
+<p class="cap">time_resolution.py</p>
+{{TR_CODE}}
+<p class="cap">COW_TIME_UNIT=month</p>
+{{TR_MONTH}}
+<p class="cap">COW_TIME_UNIT=week</p>
+{{TR_WEEK}}
+<p class="cap">COW_TIME_UNIT=day</p>
+{{TR_DAY}}
+<p>The same cow keeps her biology but gets different state coordinates, and the reward of a state is the reward of one step of that length. Per day the three agree closely, not exactly: a finer step resolves what a coarser step averages. A herd file made at one resolution is refused at another; the raw file (<code>example_raw_herd_path()</code>: days in milk and days pregnant in real days) can be loaded at any of them. The day model has about 2 million states, so use it on purpose.</p>
+
 <h2 id="own-herd">Your own herd</h2>
 <p>A CSV with one row per cow and the columns <code>lactation</code> (1&ndash;10), <code>dim_days</code> (days in milk), <code>dp_days</code> (days pregnant, 0 if open) and optionally <code>cow_id</code>. Replace <code>example_herd_path()</code> by the file name. <code>load_herd</code> maps each cow to a model state and reports every record it cannot map, with its row and <code>cow_id</code>.</p>
+<p>Five Jupyter notebooks that follow this workflow with a CSV of your own (cows, farm projection, individual rewards, youngstock, and your own domain on the engine) are in the <code>user_examples/</code> folder of the GitHub repository. They are not part of the installed package; <a href="examples.html#notebooks">the Examples page</a> shows how to get and run them.</p>
 <div class="note"><b>Tutorial data.</b> The example herd is synthetic: cows drawn from the model's own steady-state herd (seed 42). No real farm records are shipped.</div>
 
 <h2 id="next">Next</h2>
 <div class="cards">
-<a class="card" href="examples.html"><b>Examples</b><span>Four complete, runnable scripts with their real output.</span></a>
+<a class="card" href="examples.html#notebooks"><b>Example notebooks</b><span>Five Jupyter notebooks: your cows from a CSV, farm projection, rewards, youngstock, your own domain.</span></a>
+<a class="card" href="examples.html#scripts"><b>Example scripts</b><span>Four complete, runnable scripts with their real output.</span></a>
 <a class="card" href="tutorial.html"><b>Tutorial</b><span>The workflow step by step: data, comparison, keep/cull, projection, time resolution.</span></a>
 <a class="card" href="science.html"><b>Scientific background</b><span>What the model is: states, time, rewards and the keep/replace comparison.</span></a>
 </div>

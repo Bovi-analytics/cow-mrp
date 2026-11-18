@@ -19,11 +19,14 @@ from cowmrp.mrp.engine import resolve_method
 MILK_PRICE_PER_KG = 0.474
 
 # Feed cost per kg dry matter. Eastridge & Weiss (2007, OSU Buckeye Dairy News
-# 9(3)) give $0.06-0.08 per lb of dietary DM. Corn prices changed little between
-# 2007 ($3.17-4.39/bu) and 2023-2024 ($4.17-4.75/bu), so a modest escalation
-# gives about 0.20-0.22, close to the value used. A USDA-ERS-based derivation
-# gives a higher figure but likely overstates it, because that series allocates
-# replacement-heifer feed cost into the milk-production denominator.
+# 9(3)) give $0.06-0.08 per lb of dietary DM, i.e. $0.13-0.18 per kg. Corn prices changed
+# little between 2007 ($3.17-4.39/bu) and 2023-2024 ($4.17-4.75/bu), so a modest escalation
+# of that range gives about $0.20-0.22 per kg. The value used here, 0.28, is NOT directly
+# supported by that reference: it is above both the published and the escalated range, and
+# no source for it is recorded. It is a default that can be overridden (see
+# cowmrp.domains.cow.economics). A USDA-ERS-based derivation gives a higher figure but
+# likely overstates it, because that series allocates replacement-heifer feed cost into
+# the milk-production denominator.
 FEED_PRICE_PER_KG_DM = 0.28
 
 # Blended value of one calf at birth under conventional (unsexed) dairy semen: about 50 % heifer and
@@ -88,8 +91,10 @@ DIAGNOSIS_COST = 8.0  # Basic palpation or blood-test pregnancy diagnosis ($5-10
 SYNCHRONIZATION_COST = 13.0  # Single Ovsynch protocol without CIDR (GnRH + PGF +
 # handling cost breakdown).
 import os as _os
-# Days-open penalty: off by default. The $3.20-5.10 per day of De Vries (2006) is the marginal cost
-# of an extra open day computed from milk, calving-delay and replacement flows, and this model already
+# Days-open penalty: off by default. The $3.20-5.10 per day attributed to De Vries (2006) is UNVERIFIED:
+# that range is not in the paper's text (the paper gives the value of a pregnancy as a function of
+# days in milk, parity and relative milk yield, not a flat per-day figure). If such a figure applies,
+# it is the marginal cost of an extra open day computed from milk, calving-delay and replacement flows, and this model already
 # books those flows explicitly (milk income, feed, calving chain, culling). Adding the penalty counts
 # them twice: with it the model's implied cost is about $6 per open day (outside the published range),
 # without it about $3.2-3.6 (inside). It is kept only as an optional sensitivity component (set

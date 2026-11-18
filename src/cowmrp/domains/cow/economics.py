@@ -88,7 +88,7 @@ _META = {
     "ABORTION_COST": dict(unit="USD per pregnancy loss", price_year=None, geography=None, affects="rewards (reproduction_cost)",
                           source="no source recorded in rewards/base.py"),
     "DAYS_OPEN_PENALTY_PER_DAY": dict(unit="USD per open day", price_year=None, geography=None, affects="rewards (reproduction_cost)",
-                                      source="De Vries (2006), 3.20-5.10 per open day; the attribution could not be verified against the PDF held in the repository; off by default"),
+                                      source="3.20-5.10 per open day is attributed to De Vries (2006) but is UNVERIFIED: it is not in the paper; off by default"),
     "REARING_COST": dict(unit="USD per replacement heifer", price_year="2024", geography="US", affects="KEEP/CULL layer only (not the reward vector)",
                          source="2,258-2,651 range, midpoint used; no single published source cited (rewards/base.py)"),
 }
@@ -149,8 +149,8 @@ def _notes(values):
                      f"documents the price as a dressed-weight price; check that the two values use the same basis.")
     if values.get("DAYS_OPEN_PENALTY_PER_DAY", 0.0) > 0:
         notes.append("DAYS_OPEN_PENALTY_PER_DAY is above 0. The default is 0: the model's documentation records that this penalty overlaps flows the model already "
-                     "books (milk, calving, replacement) and that the model's implied cost per open day was about 6 USD with it, against the published 3.20-5.10 "
-                     "(attribution not verified here).")
+                     "books (milk, calving, replacement) and that the model's implied cost per open day was about 6 USD with it, against the 3.20-5.10 attributed to De Vries (2006) "
+                     "(that attribution is unverified: the range is not in the paper).")
     if "CALF_VALUE" in values:
         notes.append("CALF_VALUE is one blended value per calving (50% heifer / 50% bull calves at the default); it is not split by calf type.")
     if "REARING_COST" in values:

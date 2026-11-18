@@ -37,6 +37,10 @@ ASSET_SOURCES = {
     "F01_milk_curves.png": "runners/cow/outputs/validation/F01_milk_curves.png",
     "F08_steady_state_herd.png": "runners/cow/outputs/validation/F08_steady_state_herd.png",
     "F11_rewards_per_day.png": "runners/cow/outputs/validation/F11_rewards_per_day.png",
+    "fig_time_resolution.png": "guide/web/outputs/fig_time_resolution.png",      # made by guide/web/build_web.py --examples from the real models
+    "fig_farm_status.png": "guide/web/outputs/fig_farm_status.png",
+    "fig_farm_origin.png": "guide/web/outputs/fig_farm_origin.png",
+    "fig_farm_lactation.png": "guide/web/outputs/fig_farm_lactation.png",
 }
 
 # (folder, label) in the order shown on files.html. Folders are scanned for .py files (non-recursive unless listed).
@@ -185,6 +189,7 @@ def build_reference_pages(bw):
     back = '<p class="mut"><a href="index.html">&larr; CowMRP documentation</a></p>'
     methods = bw.methods_body().replace('(see <a href="science.html#rewards">Rewards</a>)', '(see the <a href="tutorial.html">tutorial</a>)')
     return {"keepcull-workbook.html": page("Keep/cull workbook", back + bw.keepcull_workbook_body().replace('href="science.html"', 'href="tutorial.html"').replace(">Science<", ">tutorial<"), extra_css=EXTRA_CSS),
+            "defaults.html": page("Defaults", back + bw.defaults_body().replace('href="index.html#resolution"', 'href="tutorial.html#units"').replace('href="examples.html#keep-cull"', 'href="tutorial.html#keepcull"').replace('href="science.html#keepcull"', 'href="tutorial.html#keepcull"'), extra_css=EXTRA_CSS),
             "methods.html": page("Methods and sources", back + methods, extra_css=EXTRA_CSS),
             "provenance.html": page("Parameters and provenance", back + bw.provenance_body(), extra_css=EXTRA_CSS)}
 
@@ -208,7 +213,7 @@ def build_files_page():
     parts = ['<p class="mut"><a href="index.html">&larr; CowMRP documentation</a></p><h1>What is in each file</h1>',
              "<p>Descriptions are the first sentence of each module's docstring. <i>no description</i> means the file has no usable docstring.</p>"
              "<h2>Where to start</h2><ol>"
-             '<li><a href="tutorial.html">The tutorial</a>, then <code>README.md</code> for the commands.</li>'
+             '<li><a href="tutorial.html">The tutorial</a>, then <code>README.md</code> for the commands; the notebooks to start from are in <code>user_examples/</code>.</li>'
              "<li>To use it: <code>src/cowmrp/domains/cow/farm.py</code> (a herd), <code>keepcull.py</code> (keep or cull), <code>projection.py</code> (one cow, cow A vs B), "
              "<code>examples/whole_farm_example.py</code>.</li>"
              "<li>To read the model: <code>src/cowmrp/domains/cow/states.py</code> (the state), <code>parameters.py</code> (every editable number), "
@@ -242,6 +247,7 @@ This site is generated from the code by <code>guide/build.py</code>; the tutoria
   <a class="card" href="tutorial.html"><b>Tutorial</b>Start here: what the model is and how to run, change and check it.</a>
   <a class="card" href="api/index.html"><b>API reference</b>Every module, class and function of the <code>cowmrp</code> package (engine, model API, cow and youngstock domains, viz).</a>
   <a class="card" href="files.html"><b>File guide</b>One line on what each file in the repository does.</a>
+  <a class="card" href="defaults.html"><b>Defaults</b>The default values, which ones can be changed for one run, how, and what stays fixed.</a>
   <a class="card" href="methods.html"><b>Methods</b>Published methods, inputs, equations, assumptions and limitations of the environmental quantities.</a>
   <a class="card" href="provenance.html"><b>Provenance</b>Sources, evidence, assumptions and rules behind the cow and youngstock parameters.</a>
 </div>

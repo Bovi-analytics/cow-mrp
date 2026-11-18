@@ -45,13 +45,13 @@ SITES = {"guide/site": "guide/build.py", "guide/web/site": "guide/web/build_web.
 
 # Hand-written documents that carry generated blocks or tokens (blocks are rewritten by ``write``).
 BLOCK_DOCS = ["README.md"]
-TOKEN_DOCS = ["guide/tutorial.html", "guide/web/content/home.html", "guide/web/content/science.html", "guide/web/content/getting-started.html"]
+TOKEN_DOCS = ["guide/tutorial.html", "guide/web/content/home.html", "guide/web/content/science.html", "guide/web/content/getting-started.html", "guide/web/content/defaults.html"]
 # Tokens that the site builders fill from other sources (not facts of this file).
-BUILD_TOKENS = {"CODE", "OUT", "STATS"}
+BUILD_TOKENS = {"CODE", "OUT", "STATS", "TR_CODE", "TR_MONTH", "TR_WEEK", "TR_DAY"}
 
 # What a built site is made from.
-SITE_SOURCES = ["src/**/*.py", "guide/build.py", "guide/sync.py", "guide/web/build_web.py", "guide/web/content/*", "guide/web/theme/*", "guide/tutorial.html",
-                "examples/*.py", "CITATION.cff", "pyproject.toml", "README.md"]
+SITE_SOURCES = ["src/**/*.py", "guide/build.py", "guide/sync.py", "guide/resolution_worker.py", "guide/web/build_web.py", "guide/web/content/*", "guide/web/theme/*", "guide/tutorial.html",
+                "examples/*.py", "user_examples/README.md", "user_examples/*.ipynb", "CITATION.cff", "pyproject.toml", "README.md"]
 
 # Model sources -> what is computed from them (for ``impact`` and the output-freshness check).
 MODEL_SOURCES = ["src/cowmrp/domains/cow/parameters.py", "src/cowmrp/domains/cow/rewards/**/*.py", "src/cowmrp/domains/cow/probabilities/**/*.py",
@@ -80,6 +80,60 @@ IMPACT = [   # (source pattern, documents and outputs that depend on it)
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # facts
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+RESOLUTIONS = ("month", "week", "day")
+CACHE = os.path.join(GUIDE, "web", "outputs", "resolution_facts.json")     # git-ignored; keyed by a hash of the model sources, so it cannot be stale
+
+
+def _model_hash():
+    h = hashlib.sha256()
+    for rel in _files(MODEL_SOURCES + ["guide/resolution_worker.py", "src/cowmrp/domains/cow/data/*", "src/cowmrp/domains/cow/*.py", "src/cowmrp/domains/youngstock/**/*.py"]):
+        h.update(rel.encode())
+        with open(os.path.join(ROOT, rel), "rb") as fh:
+            h.update(fh.read().replace(b"\r\n", b"\n"))
+    return h.hexdigest()
+
+
+def resolution_facts():
+    """The cow model at month, week and day resolution (states, transitions, the reference cow's state, a reward curve), measured by building each model
+    in its own process (one process, one resolution). Cached on disk under a hash of the model sources: any change to them recomputes it."""
+    key = _model_hash()
+    try:
+        with open(CACHE, encoding="utf8") as fh:
+            c = json.load(fh)
+        if c.get("key") == key:
+            return c["data"]
+    except (OSError, ValueError):
+        pass
+    import subprocess
+    data = {}
+    for u in RESOLUTIONS:
+        env = dict(os.environ, COW_TIME_UNIT=u, PYTHONPATH=os.path.join(ROOT, "src") + os.pathsep + os.environ.get("PYTHONPATH", ""), PYTHONIOENCODING="utf8")
+        r = subprocess.run([sys.executable, os.path.join(GUIDE, "resolution_worker.py")], env=env, capture_output=True, text=True, encoding="utf8", cwd=ROOT)
+        if r.returncode:
+            raise SystemExit(f"resolution worker failed for {u}: {r.stderr[-1500:]}")
+        data[u] = json.loads(r.stdout.strip().splitlines()[-1])
+    os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+    with open(CACHE, "w", encoding="utf8") as fh:
+        json.dump({"key": key, "data": data}, fh)
+    return data
+
+
+def resolution_table_html():
+    d = resolution_facts()
+    rows = "".join(f"<tr><td><b>{u}</b></td><td class=\"n\">{d[u]['unit_days']} d</td><td class=\"n\">{d[u]['states']:,}</td><td class=\"n\">{d[u]['transitions']:,}</td>"
+                   f"<td class=\"n\">({d[u]['reference']['dim_step']}, {d[u]['reference']['dp_step']})</td></tr>" for u in RESOLUTIONS)
+    return ("<table><tr><th>Resolution</th><th>Step</th><th>States</th><th>Transitions</th><th>Example cow as <code>(dim, dp)</code></th></tr>" + rows + "</table>")
+
+
+def block_resolution_table():
+    d = resolution_facts()
+    lines = ["| Resolution | Step | States | Transitions | Example cow as `(dim, dp)` |", "|---|---:|---:|---:|---:|"]
+    lines += [f"| {u} | {d[u]['unit_days']} d | {d[u]['states']:,} | {d[u]['transitions']:,} | ({d[u]['reference']['dim_step']}, {d[u]['reference']['dp_step']}) |" for u in RESOLUTIONS]
+    lines.append("")
+    lines.append("The example cow is in her second lactation, 150 days in milk and 60 days pregnant; `dim` and `dp` count model steps, so the same cow has different state coordinates at each resolution.")
+    return "\n".join(lines)
+
 
 _FACTS = None
 
@@ -115,6 +169,14 @@ def facts():
         "CO_STATES": f"{len(c.states):,}", "CO_NNZ": f"{c.P.nnz:,}", "YS_STATES": f"{len(y.states):,}", "YS_NNZ": f"{y.P.nnz:,}",   # CO_* are the names the site content already uses
         "_econ_rows": econ_rows, "_reward_rows": rew_rows,
     }
+    res = resolution_facts()
+    for u in RESOLUTIONS:
+        _FACTS[u.upper() + "_STATES"] = f"{res[u]['states']:,}"
+        _FACTS[u.upper() + "_NNZ"] = f"{res[u]['transitions']:,}"
+        _FACTS["YS_" + u.upper() + "_STATES"] = f"{res[u]['ys_states']:,}"
+        _FACTS["YS_" + u.upper() + "_NNZ"] = f"{res[u]['ys_transitions']:,}"
+    _FACTS["RESOLUTION_TABLE"] = resolution_table_html()
+    _FACTS["_resolution"] = res
     _FACTS["EXCEL_COLUMNS_TABLE"] = excel_columns_html()
     _FACTS["ECON_TABLE"] = econ_table_html()
     return _FACTS
@@ -182,7 +244,7 @@ def excel_columns_html():
     return ('<table><tr><th>Col</th><th>Header</th><th>Kind</th><th>Formula (row r)</th><th>Meaning</th></tr>' + rows + "</table>")
 
 
-BLOCKS = {"state_counts": block_state_counts, "reward_table": block_reward_table, "econ_table": block_econ_table, "excel_columns": block_excel_columns}
+BLOCKS = {"state_counts": block_state_counts, "resolution_table": block_resolution_table, "reward_table": block_reward_table, "econ_table": block_econ_table, "excel_columns": block_excel_columns}
 MARK = re.compile(r"(<!-- GEN:(\w+) -->\r?\n)(.*?)(\r?\n<!-- /GEN -->)", re.S)
 TOKEN = re.compile(r"\{\{([A-Z][A-Z0-9_]*)\}\}")
 
@@ -277,7 +339,7 @@ def check_tokens(problems):
 def check_hardcoded(problems):
     """A model-size number typed by hand in a hand-written document (outside generated blocks) goes stale; it should be a token or a block."""
     f = facts()
-    numbers = {k: f[k] for k in ("COW_STATES", "COW_REACHABLE", "COW_NNZ", "YS_STATES", "YS_NNZ")}
+    numbers = {k: f[k] for k in ("COW_STATES", "COW_REACHABLE", "COW_NNZ", "YS_STATES", "YS_NNZ", "WEEK_STATES", "WEEK_NNZ", "DAY_STATES", "DAY_NNZ")}
     for rel in BLOCK_DOCS + TOKEN_DOCS + ["runners/README.md"]:
         if not os.path.exists(os.path.join(ROOT, rel)):
             continue
@@ -338,6 +400,8 @@ def check_links(problems):
                 with open(src, encoding="utf8", errors="ignore") as fh:
                     txt = fh.read()
                 for m in href.finditer(txt):
+                    if re.match(r"[A-Za-z][A-Za-z0-9+.-]*:", m.group(1)):
+                        continue                                              # an external link (https:, mailto:): not a file of the site
                     target = os.path.normpath(os.path.join(dirpath, m.group(1)))
                     where = f"{site}/{os.path.relpath(src, base).replace(os.sep, '/')}"
                     if not os.path.exists(target):

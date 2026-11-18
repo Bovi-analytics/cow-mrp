@@ -1,0 +1,43 @@
+<p class="eyebrow">Defaults</p>
+<h1>Defaults and how they work</h1>
+<p class="lead">Every value in CowMRP has a default, and the defaults are the model. This page says which values you can change, how, and what stays fixed.</p>
+
+<h2 id="what">What a default is</h2>
+<p>The package runs with no configuration: the biological rates, the prices and costs, the time step (<code>month</code>), the discount rate and the simulation mode all have defaults. The results at the defaults are the reference results of the model, and the test suite compares them with saved reference numbers. A default is never replaced silently: you change a value explicitly, for one run, and when the run is over the default is back.</p>
+
+<h2 id="kinds">Three kinds of settings</h2>
+<table>
+<tr><th>Kind</th><th>Examples</th><th>How you set it</th></tr>
+<tr><td><b>Arguments of a call</b></td><td>horizon <code>years</code> (1, 3, 5), the sale <code>offer</code> (none), <code>annual_discount</code> (0.95), <code>mode</code> (<code>expected</code>), <code>steps</code> (24), <code>seed</code></td><td>pass the argument to <code>keep_cull_table</code>, <code>project_herd</code>, <code>compare_cows</code>; the default applies when you leave it out</td></tr>
+<tr><td><b>Time resolution</b></td><td><code>month</code> (30 d), <code>week</code> (7 d), <code>day</code> (1 d)</td><td>environment variable <code>COW_TIME_UNIT</code>, set before Python starts (see <a href="index.html#resolution">the overview</a>)</td></tr>
+<tr><td><b>Economic settings</b></td><td>milk price, feed price, calf value, beef price, rearing cost and the other prices and costs listed below</td><td><code>economic_overrides(...)</code> in Python, or <code>--set NAME=VALUE</code> in the keep/cull runner</td></tr>
+</table>
+<p>The <b>biological and management parameters</b> (conception, culling and mortality rates, the milk curve, the waiting period and so on) are not overridable through the API. They are the scientific content of the model; they are documented with their sources on the <a href="provenance.html">Provenance</a> page and changed only in the source, after review.</p>
+
+<h2 id="override">Overriding an economic setting</h2>
+<p>An override lasts for one <code>with</code> block. Only the settings you name change; every other setting keeps exactly its default, and every value is restored when the block ends, also after an error.</p>
+<pre><code>from cowmrp.model import build_model
+from cowmrp.domains.cow.economics import economic_overrides, reprice_model
+from cowmrp.domains.cow.keepcull import keep_cull_table
+
+model = build_model("cow")
+with economic_overrides(MILK_PRICE_PER_KG=0.52, REARING_COST=2800):
+    scenario = reprice_model(model)                  # rewards recomputed; states and the transition matrix are the same objects
+    table = keep_cull_table(herd, scenario)          # keep/cull inside the block, so REARING_COST applies
+# here every value is back to its default</code></pre>
+<p>From the command line: <code>python runners/cow/farm/keepcull.py --offer 900 --set REARING_COST=2800 --set MILK_PRICE_PER_KG=0.52</code>. The results go to a separate <code>keepcull_scenario/</code> folder together with a file that records every overridden value, so a scenario is never mistaken for the default run. The <a href="examples.html#keep-cull">keep/cull example</a> runs the same table at the default and at a different rearing cost.</p>
+
+<h2 id="guarantees">What the override guarantees, and what it does not</h2>
+<ul>
+<li><b>Probabilities cannot change.</b> <code>reprice_model</code> recomputes the rewards only; the transition matrix and the biological probabilities are the same objects as in the model you pass in.</li>
+<li><b>Rearing cost is read by the keep/cull layer,</b> not by the reward vector (the replacement cost is charged in the cow-versus-heifer comparison). Call the keep/cull function inside the block.</li>
+<li><b>A warning is given for combinations that are easy to get wrong,</b> for example overriding the beef price without the dressing percentage, or switching on the days-open penalty (off by default because it overlaps flows the model already books).</li>
+<li><b>Not thread-safe.</b> The override replaces module-level values of the running process: use it in sequential scripts and notebooks, one scenario at a time. Nested override blocks are refused.</li>
+<li><b>Scenario results are not the defaults.</b> A table made inside a block says nothing about the reference model; the saved baselines apply to the defaults only.</li>
+<li><b>The discount rate and the sale offer are not overridden this way:</b> they are arguments of the functions (see above).</li>
+</ul>
+
+<h2 id="reading">Reading the defaults</h2>
+<p>The table is read from the package when this page is built, so it always shows the values the code uses. A value shown as "not recorded" is a value whose price year, region or source the repository does not record; nothing is filled in by guess. The prices are US market figures: replace them with your own before using the money results on a farm.</p>
+{{ECON_TABLE}}
+<p>The sources and the assumptions behind these values are on the <a href="methods.html">Methods</a> and <a href="provenance.html">Provenance</a> pages. The keep/cull comparison that reads them is explained on the <a href="science.html#keepcull">Science</a> page.</p>
