@@ -181,6 +181,7 @@ EXTRA_CSS = """
 dl.gloss{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px}dl.gloss dt{font-weight:700;color:var(--acc)}dl.gloss dd{margin:0;color:var(--mut)}
 table.method th{width:11em;text-transform:none;letter-spacing:0;font-size:.95em;color:var(--acc)}table.method table.method{margin:0;font-size:.92em}
 table.method ul{margin:0;padding-left:1.1em}table.method code{display:inline-block;margin:0 4px 2px 0}
+figure{margin:1.4em 0}figure img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff;display:block}figcaption{color:var(--mut);font-size:.88rem;margin-top:.4em}
 """
 
 
@@ -190,6 +191,7 @@ def build_reference_pages(bw):
     methods = bw.methods_body().replace('(see <a href="science.html#rewards">Rewards</a>)', '(see the <a href="tutorial.html">tutorial</a>)')
     return {"keepcull-workbook.html": page("Keep/cull workbook", back + bw.keepcull_workbook_body().replace('href="science.html"', 'href="tutorial.html"').replace(">Science<", ">tutorial<"), extra_css=EXTRA_CSS),
             "defaults.html": page("Defaults", back + bw.defaults_body().replace('href="index.html#resolution"', 'href="tutorial.html#units"').replace('href="examples.html#keep-cull"', 'href="tutorial.html#keepcull"').replace('href="science.html#keepcull"', 'href="tutorial.html#keepcull"'), extra_css=EXTRA_CSS),
+            "performance.html": page("Computational performance and scalability", back + bw.performance_body(), extra_css=EXTRA_CSS),
             "methods.html": page("Methods and sources", back + methods, extra_css=EXTRA_CSS),
             "provenance.html": page("Parameters and provenance", back + bw.provenance_body(), extra_css=EXTRA_CSS)}
 
@@ -248,6 +250,7 @@ This site is generated from the code by <code>guide/build.py</code>; the tutoria
   <a class="card" href="api/index.html"><b>API reference</b>Every module, class and function of the <code>cowmrp</code> package (engine, model API, cow and youngstock domains, viz).</a>
   <a class="card" href="files.html"><b>File guide</b>One line on what each file in the repository does.</a>
   <a class="card" href="defaults.html"><b>Defaults</b>The default values, which ones can be changed for one run, how, and what stays fixed.</a>
+  <a class="card" href="performance.html"><b>Performance</b>How long a herd projection takes at monthly, weekly and daily resolution for 1, 1,000 and 10,000 cows, where the time goes, and how memory scales.</a>
   <a class="card" href="methods.html"><b>Methods</b>Published methods, inputs, equations, assumptions and limitations of the environmental quantities.</a>
   <a class="card" href="provenance.html"><b>Provenance</b>Sources, evidence, assumptions and rules behind the cow and youngstock parameters.</a>
 </div>
@@ -301,6 +304,9 @@ def main():
         s = os.path.join(ROOT, src)
         if os.path.exists(s):
             shutil.copy2(s, os.path.join(ASSETS_SRC, name))
+    sys.path.insert(0, os.path.join(GUIDE, "web"))
+    import build_web as bw
+    bw.performance_figures(ASSETS_SRC)                         # the four performance figures, drawn from guide/web/content/performance_data.json
     for name in os.listdir(ASSETS_SRC):
         shutil.copy2(os.path.join(ASSETS_SRC, name), os.path.join(SITE, "assets", name))
 
@@ -317,8 +323,6 @@ def main():
         fh.write(sync.fill_tokens(open(os.path.join(GUIDE, "tutorial.html"), encoding="utf8").read()))
     open(os.path.join(SITE, "files.html"), "w", encoding="utf8").write(build_files_page())
     open(os.path.join(SITE, "index.html"), "w", encoding="utf8").write(build_index(cov))
-    sys.path.insert(0, os.path.join(GUIDE, "web"))
-    import build_web as bw
     for name, h in build_reference_pages(bw).items():
         open(os.path.join(SITE, name), "w", encoding="utf8").write(h)
     hide_api_values(bw)

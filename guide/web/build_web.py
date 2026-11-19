@@ -66,7 +66,7 @@ EXAMPLES = [
 QUICKSTART = os.path.join(CONTENT, "quickstart.py")
 TIME_RESOLUTION = os.path.join(CONTENT, "time_resolution.py")
 NAV = [("Home", "index.html"), ("Getting started", "getting-started.html"), ("Examples", "examples.html"), ("Tutorial", "tutorial.html"), ("Defaults", "defaults.html"),
-       ("API", "api/index.html"), ("Science", "science.html"), ("Methods", "methods.html"), ("Provenance", "provenance.html"), ("Cite", "cite.html")]
+       ("API", "api/index.html"), ("Science", "science.html"), ("Performance", "performance.html"), ("Methods", "methods.html"), ("Provenance", "provenance.html"), ("Cite", "cite.html")]
 API_MODULES = ["cowmrp.mrp", "cowmrp.model", "cowmrp.domain", "cowmrp.io", "cowmrp.viz", "cowmrp.data", "cowmrp.domains.cow", "cowmrp.domains.youngstock"]
 # --- API pages: long module-level values --------------------------------------------------------------------------------------------------
 # Presentation only: the values stay in the package and in "View Source". HIDE_VALUES (explicit names, never a pattern) are internal wiring
@@ -637,6 +637,8 @@ def build_pages(nums):
     pages["defaults.html"] = page("Defaults", defaults_body(), "Defaults", "The default values of CowMRP, which can be changed for one run, how, and what stays fixed.")
     pages["methods.html"] = page("Methods and sources", methods_body(), "Methods", "Published methods, inputs, equations, assumptions and limitations of the environmental quantities.")
     pages["provenance.html"] = page("Parameters and provenance", provenance_body(), "Provenance", "Sources, evidence, assumptions and rules behind the cow and youngstock parameters.")
+    pages["performance.html"] = page("Computational performance and scalability", performance_body(), "Performance",
+                                     "How long a CowMRP herd projection takes at monthly, weekly and daily resolution for 1, 1,000 and 10,000 cows: stages, memory, scaling and limitations.")
     pages["keepcull-workbook.html"] = page("Keep/cull workbook", keepcull_workbook_body(), "Science", "The Excel keep/cull accounting workbook: terms, columns, formulas, assumptions and limits.")
     pages["cite.html"] = page("Cite", cite_body(), "Cite", "How to cite cowmrp and its licence.")
     return pages
@@ -645,6 +647,19 @@ def build_pages(nums):
 def defaults_body():
     """The defaults page: hand-written explanation plus the economic settings table, read from the package."""
     return sync.fill_tokens(read(os.path.join(CONTENT, "defaults.html")))
+
+
+def performance_body():
+    """The performance page: hand-written explanation plus tables, sentences and figures generated from content/performance_data.json (guide/web/performance_page.py)."""
+    sys.path.insert(0, WEB)
+    import performance_page
+    return performance_page.body(read, sync.facts())
+
+
+def performance_figures(outdir):
+    sys.path.insert(0, WEB)
+    import performance_page
+    return performance_page.make_figures(outdir)
 
 
 def keepcull_workbook_body():
@@ -727,6 +742,7 @@ def main():
         shutil.rmtree(SITE)
     assets = os.path.join(SITE, "assets")
     os.makedirs(assets)
+    performance_figures(OUT)                                          # four figures drawn from content/performance_data.json (fast, no model build)
     css = read(os.path.join(THEME, "web.css"))
     write(os.path.join(assets, "web.css"), css)
     write(os.path.join(assets, "api-bar.css"), api_bar_css(css))

@@ -1,0 +1,411 @@
+{
+ "measured_on": "2026-11-18",
+ "environment": {
+  "python": "3.13.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+  "logical_cores": 8,
+  "ram_gb": 34.1,
+  "psutil": "7.1.3",
+  "package_source": "cowmrp 0.1.0 source tree (release candidate), unmodified during the runs"
+ },
+ "workflow": {
+  "horizon_months": 24,
+  "keepcull_years": [
+   1,
+   3,
+   5
+  ],
+  "herd_file_cows": 1000
+ },
+ "scenarios": [
+  {
+   "unit": "month",
+   "n_target": 1,
+   "n_cows": 1,
+   "n_original": 1,
+   "n_copies": 0,
+   "runs": 7,
+   "steps": 24,
+   "num_states": 2970,
+   "nnz": 9040,
+   "e2e": {
+    "wall": 0.24467159999767318,
+    "min": 0.23298799997428432,
+    "max": 0.266638100030832,
+    "cpu_pct": 95.22213419558021,
+    "peak_mb": 124.366848
+   },
+   "stages": {
+    "states": 0.005024500016588718,
+    "probabilities": 0.08234000002266839,
+    "rewards": 0.007024099992122501,
+    "transition_matrix": 0.020640700007788837,
+    "row_check": 0.00024640001356601715,
+    "prepare_herd": 0.008952400006819516,
+    "map_to_states": 0.005250300047919154,
+    "future_distribution": 0.05161039996892214,
+    "state_values": 0.015611400012858212,
+    "keep_cull": 0.01621599995996803,
+    "save_results": 0.00484040001174435
+   },
+   "output_bytes": 565,
+   "fallback": false,
+   "overhead_s": {
+    "min": 0.022961299924645573,
+    "max": 0.04108980001183227
+   }
+  },
+  {
+   "unit": "month",
+   "n_target": 1000,
+   "n_cows": 1000,
+   "n_original": 1000,
+   "n_copies": 0,
+   "runs": 7,
+   "steps": 24,
+   "num_states": 2970,
+   "nnz": 9040,
+   "e2e": {
+    "wall": 0.255285500024911,
+    "min": 0.23764450004091486,
+    "max": 0.29104630002984777,
+    "cpu_pct": 97.36214785447928,
+    "peak_mb": 124.649472
+   },
+   "stages": {
+    "states": 0.005203400040045381,
+    "probabilities": 0.07598319998942316,
+    "rewards": 0.006863799993880093,
+    "transition_matrix": 0.02044629998272285,
+    "row_check": 0.00028519995976239443,
+    "prepare_herd": 0.00719319999916479,
+    "map_to_states": 0.006146100000478327,
+    "future_distribution": 0.05053460004273802,
+    "state_values": 0.015415300033055246,
+    "keep_cull": 0.01493750000372529,
+    "save_results": 0.022935000015422702
+   },
+   "output_bytes": 166102,
+   "fallback": false,
+   "overhead_s": {
+    "min": 0.02345400006743148,
+    "max": 0.029038800043053925
+   }
+  },
+  {
+   "unit": "month",
+   "n_target": 10000,
+   "n_cows": 10000,
+   "n_original": 1000,
+   "n_copies": 9000,
+   "runs": 7,
+   "steps": 24,
+   "num_states": 2970,
+   "nnz": 9040,
+   "e2e": {
+    "wall": 0.3979605999775231,
+    "min": 0.3691409999737516,
+    "max": 0.5633133000228554,
+    "cpu_pct": 99.8337435438177,
+    "peak_mb": 128.270336
+   },
+   "stages": {
+    "states": 0.005039700015913695,
+    "probabilities": 0.07332429999951273,
+    "rewards": 0.006685499974992126,
+    "transition_matrix": 0.02160779997939244,
+    "row_check": 0.0002196999848820269,
+    "prepare_herd": 0.007405499985907227,
+    "map_to_states": 0.01362340000923723,
+    "future_distribution": 0.05279260000679642,
+    "state_values": 0.01830960001097992,
+    "keep_cull": 0.017718899995088577,
+    "save_results": 0.1486231000162661
+   },
+   "output_bytes": 1687405,
+   "fallback": false,
+   "overhead_s": {
+    "min": 0.023177799943368882,
+    "max": 0.03080010018311441
+   }
+  },
+  {
+   "unit": "week",
+   "n_target": 1,
+   "n_cows": 1,
+   "n_original": 1,
+   "n_copies": 0,
+   "runs": 7,
+   "steps": 104,
+   "num_states": 42290,
+   "nnz": 131197,
+   "e2e": {
+    "wall": 1.461112699995283,
+    "min": 1.3974069000105374,
+    "max": 1.6525121000013314,
+    "cpu_pct": 98.33513473206585,
+    "peak_mb": 277.065728
+   },
+   "stages": {
+    "states": 0.012318499968387187,
+    "probabilities": 0.12064269999973476,
+    "rewards": 0.06793760001892224,
+    "transition_matrix": 0.05756220000330359,
+    "row_check": 0.001270200009457767,
+    "prepare_herd": 0.012125200009904802,
+    "map_to_states": 0.009988599980715662,
+    "future_distribution": 0.6157203000038862,
+    "state_values": 0.19131129997549579,
+    "keep_cull": 0.30795669998042285,
+    "save_results": 0.0049149999977089465
+   },
+   "output_bytes": 560,
+   "fallback": false,
+   "overhead_s": {
+    "min": 0.022741699998732656,
+    "max": 0.028501099965069443
+   }
+  },
+  {
+   "unit": "week",
+   "n_target": 1000,
+   "n_cows": 1000,
+   "n_original": 972,
+   "n_copies": 28,
+   "runs": 7,
+   "steps": 104,
+   "num_states": 42290,
+   "nnz": 131197,
+   "e2e": {
+    "wall": 1.5266123000183143,
+    "min": 1.291222200030461,
+    "max": 1.6745534999645315,
+    "cpu_pct": 99.2802822289469,
+    "peak_mb": 277.245952
+   },
+   "stages": {
+    "states": 0.012725299980957061,
+    "probabilities": 0.11780630005523562,
+    "rewards": 0.07321780000347644,
+    "transition_matrix": 0.06674809998366982,
+    "row_check": 0.0012585999793373048,
+    "prepare_herd": 0.011064200021792203,
+    "map_to_states": 0.010698300029616803,
+    "future_distribution": 0.6393095999956131,
+    "state_values": 0.1857405000482686,
+    "keep_cull": 0.29935710004065186,
+    "save_results": 0.02065350004704669
+   },
+   "output_bytes": 169281,
+   "fallback": false,
+   "overhead_s": {
+    "min": 0.023503600037656724,
+    "max": 0.030549900082405657
+   }
+  },
+  {
+   "unit": "week",
+   "n_target": 10000,
+   "n_cows": 10000,
+   "n_original": 972,
+   "n_copies": 9028,
+   "runs": 7,
+   "steps": 104,
+   "num_states": 42290,
+   "nnz": 131197,
+   "e2e": {
+    "wall": 1.5812429999932647,
+    "min": 1.483514700026717,
+    "max": 1.9409088999964297,
+    "cpu_pct": 99.79260257702906,
+    "peak_mb": 280.645632
+   },
+   "stages": {
+    "states": 0.013578800018876791,
+    "probabilities": 0.12298539996845648,
+    "rewards": 0.07020479999482632,
+    "transition_matrix": 0.05900840001413599,
+    "row_check": 0.0014376999461092055,
+    "prepare_herd": 0.010667300026398152,
+    "map_to_states": 0.01898410002468154,
+    "future_distribution": 0.6536576999933459,
+    "state_values": 0.1963098999694921,
+    "keep_cull": 0.22058030002517626,
+    "save_results": 0.17177199997240677
+   },
+   "output_bytes": 1719166,
+   "fallback": false,
+   "overhead_s": {
+    "min": 0.024307000101543963,
+    "max": 0.0579398000263609
+   }
+  },
+  {
+   "unit": "day",
+   "n_target": 1,
+   "n_cows": 1,
+   "n_original": 1,
+   "n_copies": 0,
+   "runs": 1,
+   "steps": 730,
+   "num_states": 1952060,
+   "nnz": 6109989,
+   "e2e": {
+    "wall": 266.89953410002636,
+    "min": 266.89953410002636,
+    "max": 266.89953410002636,
+    "cpu_pct": 99.70394886499494,
+    "peak_mb": 3631.448064
+   },
+   "stages": {
+    "states": 0.49218780000228435,
+    "probabilities": 0.8739945000270382,
+    "rewards": 5.044881500012707,
+    "transition_matrix": 3.7622643999638967,
+    "row_check": 0.10364260000642389,
+    "prepare_herd": 0.419617899984587,
+    "map_to_states": 0.5663796999724582,
+    "future_distribution": 25.663382200000342,
+    "state_values": 39.1373247000156,
+    "keep_cull": 190.7821791000315,
+    "save_results": 0.005399400019086897
+   },
+   "output_bytes": 570,
+   "fallback": true,
+   "overhead_s": {
+    "min": 0.048280299990437925,
+    "max": 0.048280299990437925
+   }
+  },
+  {
+   "unit": "day",
+   "n_target": 1000,
+   "n_cows": 1000,
+   "n_original": 972,
+   "n_copies": 28,
+   "runs": 1,
+   "steps": 730,
+   "num_states": 1952060,
+   "nnz": 6109989,
+   "e2e": {
+    "wall": 260.5036578999716,
+    "min": 260.5036578999716,
+    "max": 260.5036578999716,
+    "cpu_pct": 100.09456377772746,
+    "peak_mb": 3632.070656
+   },
+   "stages": {
+    "states": 0.4785993999685161,
+    "probabilities": 0.8583974000066519,
+    "rewards": 5.182503500021994,
+    "transition_matrix": 3.866212099965196,
+    "row_check": 0.09040520002599806,
+    "prepare_herd": 0.46850840002298355,
+    "map_to_states": 0.5584552999935113,
+    "future_distribution": 26.91022439999506,
+    "state_values": 38.58044430002337,
+    "keep_cull": 183.43548929999815,
+    "save_results": 0.024685800017323345
+   },
+   "output_bytes": 172396,
+   "fallback": true,
+   "overhead_s": {
+    "min": 0.04973279993282631,
+    "max": 0.04973279993282631
+   }
+  },
+  {
+   "unit": "day",
+   "n_target": 10000,
+   "n_cows": 10000,
+   "n_original": 972,
+   "n_copies": 9028,
+   "runs": 1,
+   "steps": 730,
+   "num_states": 1952060,
+   "nnz": 6109989,
+   "e2e": {
+    "wall": 264.78048690001015,
+    "min": 264.78048690001015,
+    "max": 264.78048690001015,
+    "cpu_pct": 97.29167659446212,
+    "peak_mb": 3633.5616
+   },
+   "stages": {
+    "states": 0.5218487000092864,
+    "probabilities": 0.8570963999954984,
+    "rewards": 5.23927330004517,
+    "transition_matrix": 3.992737400054466,
+    "row_check": 0.09020580002106726,
+    "prepare_herd": 0.44523749995278195,
+    "map_to_states": 0.634230799973011,
+    "future_distribution": 26.4598184999777,
+    "state_values": 49.70214569999371,
+    "keep_cull": 176.59705450001638,
+    "save_results": 0.19289459998253733
+   },
+   "output_bytes": 1750232,
+   "fallback": true,
+   "overhead_s": {
+    "min": 0.04794369998853654,
+    "max": 0.04794369998853654
+   }
+  }
+ ],
+ "daily_limitation": {
+  "vectors_kept": 2193,
+  "states": 1952060,
+  "needed_gb_recorded": 34,
+  "available_gb_recorded": 23,
+  "steps": 730,
+  "record_text": "project_herd not attempted: it keeps 2193 vectors of 1,952,060 states = about 34 GB, more than 80% of the 23 GB available (an earlier pilot run of this exact case ran out of memory)"
+ },
+ "herd_construction": {
+  "file_cows": 1000,
+  "no_state_weekly_daily": 28,
+  "reasons": [
+   {
+    "cows": 20,
+    "text": "report 300 days pregnant; the model's gestation axis ends at 277 days (40 weeks, 280 days, in the weekly table)"
+   },
+   {
+    "cows": 8,
+    "text": "report a conception 30 days after calving, before the 50-day voluntary waiting period"
+   }
+  ],
+  "distinct_valid": 972,
+  "lactation_share_shift_pp": {
+   "1000": 0.44,
+   "10000": 0.11
+  }
+ },
+ "checks": {
+  "fallback_vs_project_herd": [
+   {
+    "resolution": "month",
+    "steps": 24,
+    "max_abs_difference": 0.0
+   },
+   {
+    "resolution": "week",
+    "steps": 104,
+    "max_abs_difference": 0.0
+   },
+   {
+    "resolution": "day",
+    "steps": 30,
+    "max_abs_difference": 0.0
+   },
+   {
+    "resolution": "day",
+    "steps": 120,
+    "max_abs_difference": 0.0
+   }
+  ],
+  "fallback_vs_independent_loop_day_730": {
+   "max_abs_difference": 7.134e-17,
+   "mass": 1.0
+  }
+ }
+}

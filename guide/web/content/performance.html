@@ -1,0 +1,97 @@
+<p class="eyebrow">Performance</p>
+<h1>Computational performance and scalability</h1>
+<p class="lead">How long a herd projection takes in CowMRP, which steps dominate the time, and how the time changes with the time resolution and the size of the herd.
+Every number on this page was measured on one machine, described below. The results show where the time goes and how it scales; they are not a performance guarantee for other hardware or software.</p>
+
+<h2 id="approach">How CowMRP projects a herd</h2>
+<p>CowMRP uses an <b>expected-distribution</b> approach. The herd is not simulated cow by cow. The cows are counted into the states of the model, <code>(lactation, days in milk, days pregnant)</code>,
+which gives one distribution over the states: the share of the herd in each state. That distribution is multiplied by the transition matrix once per step,
+<code>π(t+1) = π(t) · P</code>, and after <i>k</i> steps it holds the expected share of the herd in every state. Multiplied by the number of cows, it gives the expected numbers of cows
+(Open, Pregnant, Dry, by lactation, and so on) at every step.</p>
+<p><b>Computational work is shared between animals.</b> Two cows in the same state follow the same row of the matrix, so they are propagated together instead of one trajectory per cow.
+Two kinds of work have to be told apart:</p>
+<ul>
+<li><b>The propagation</b> (multiplying the state distribution by the matrix, step after step) is the main calculation. Its cost is determined mainly by the size of the state space (the number of non-zero transitions)
+and the number of projection steps; it does not need a separate trajectory for every cow.</li>
+<li><b>The work around it does grow with the herd.</b> Reading and checking the herd records, assigning each cow to a state, counting the cows into the initial distribution, preparing per-cow results and writing them out
+all take more time for more cows. In these measurements this part was small next to the propagation, but it is not zero and it rises with the herd size.</li>
+</ul>
+<p>The same sharing applies to values: the state values and the KEEP / CULL comparison are solved once for every state of the model (see <a href="tutorial.html#keepcull">keep / cull</a>), and each cow is then a lookup of her state;
+the lookup and the per-cow output grow with the herd, the solve does not repeat per cow. Over the herd sizes measured here (1 to 10,000 cows) the total time grew much more slowly than the herd. That is a measurement on these herds,
+not a claim that the cost is independent of herd size, or that it behaves the same way for much larger herds or other hardware.</p>
+<div class="note"><b>What this is not.</b> It is not a way of simulating individual animals. CowMRP also offers stochastic and Monte Carlo modes (sampled paths for every cow); their cost grows with the herd,
+and they were <b>not benchmarked</b> here. “Time per cow” on this page is an <i>amortised</i> figure (total time divided by the number of cows), not the cost of simulating each cow.</div>
+
+<h2 id="method">What was measured</h2>
+<p>One workflow was timed: the expected-distribution projection of a herd for {{PF_HORIZON}} months, with its values and its KEEP / CULL table, from building the model to saving the results.
+It was run at three time resolutions (<a href="tutorial.html#units">monthly, weekly and daily steps</a>, which give {{PF_STEPS}} steps for the {{PF_HORIZON}} months) and for herds of 1, 1,000 and 10,000 cows: nine scenarios.</p>
+<table>
+<tr><th>Group</th><th>Stage</th><th>What it does</th></tr>
+<tr><td rowspan="5"><b>Fixed</b><br>model construction, independent of the herd</td><td>Build states</td><td>The table of all states that exist at that resolution.</td></tr>
+<tr><td>Probabilities</td><td>Every transition probability for every state.</td></tr>
+<tr><td>Reward vector</td><td>The reward components and their total for every state.</td></tr>
+<tr><td>Transition matrix</td><td>The sparse matrix <code>P</code> assembled from the probabilities.</td></tr>
+<tr><td>Row-sum check</td><td>Every row of <code>P</code> must sum to one.</td></tr>
+<tr><td rowspan="6"><b>Herd-dependent</b></td><td>Prepare herd</td><td>Read the herd file, keep the records that have a state, select or repeat records up to the herd size.</td></tr>
+<tr><td>Map cows to states</td><td><code>load_herd</code>: each cow (lactation, days in milk, days pregnant) becomes a model state.</td></tr>
+<tr><td>Future state distribution</td><td><code>project_herd(mode="expected")</code> for {{PF_HORIZON}} months. At daily resolution see <a href="#daily">the daily-resolution limitation</a>.</td></tr>
+<tr><td>State values / rewards</td><td><code>herd_values</code>: the expected discounted value of every state (infinite horizon), one value per cow.</td></tr>
+<tr><td>KEEP / CULL</td><td><code>keep_cull_table</code> at horizons of {{PF_KC_YEARS}} years.</td></tr>
+<tr><td>Save results</td><td>Three CSV files: the distribution summary, the values per cow and the KEEP / CULL table per cow.</td></tr>
+</table>
+<p>Each scenario ran in a fresh Python process, because the time resolution is fixed when the package is imported and peak memory must not carry over from one scenario to the next.
+Stage times are wall-clock times (<code>time.perf_counter</code>). The complete workflow was also timed directly, so the end-to-end time is <b>not assumed</b> to be the sum of the stages: the difference was
+{{PF_OVERHEAD_TEXT}} (loading the domain definition and the bookkeeping of the benchmark script). CPU use is the CPU time of the process divided by its wall time (100 % is one core fully used); peak memory is the resident
+memory of the process, sampled every 20 ms. The time to import the package is not included.</p>
+<h3 id="environment">Hardware and software</h3>
+<p>Recorded when the benchmark was run. Versions of NumPy, SciPy and pandas were not recorded in the saved results and are therefore not stated.</p>
+{{PF_ENV_TABLE}}
+
+<h2 id="results">Results</h2>
+<h3 id="runtime">Runtime by resolution and herd size</h3>
+<p>The table gives, for every scenario, the end-to-end time of the complete workflow, the amortised time per cow, the peak memory, the CPU use and the size of the results written. Repeats: monthly and weekly,
+the median of {{PF_REPS_MS}} runs (range under the median); daily, a single run.</p>
+{{PF_SUMMARY_TABLE}}
+<p class="mut" style="font-size:.88rem">* Daily: the future distribution was computed without storing the trajectory (see <a href="#daily">below</a>).</p>
+<figure><img src="assets/fig_perf_runtime.png" alt="End-to-end time by herd size and time resolution (log scale)">
+<figcaption><b>Figure 1.</b> End-to-end time of the complete workflow (log scale). Bars show the median; whiskers show the range of the repeats (monthly and weekly). Daily bars are single runs.</figcaption></figure>
+<p>{{PF_RUNTIME_TEXT}}</p>
+
+<h3 id="stages">Where the time goes</h3>
+<p>Stage times for 1,000 cows (medians for monthly and weekly, single runs for daily). How the herd-dependent stages together change with the herd size is shown in the next section.</p>
+{{PF_STAGE_TABLE}}
+<p class="mut" style="font-size:.88rem">* Daily future distribution: computed without storing the trajectory (see <a href="#daily">below</a>).</p>
+<figure><img src="assets/fig_perf_stages.png" alt="Share of the time spent in each stage, by resolution">
+<figcaption><b>Figure 2.</b> Share of the sum of the stage times at 1,000 cows. Blue shades: model construction (fixed). Other colours: herd-dependent stages.</figcaption></figure>
+<p>{{PF_STAGES_TEXT}}</p>
+
+<h3 id="percow">Herd size and time per cow</h3>
+<p>The herd-dependent stages (prepare, map, future distribution, state values, KEEP / CULL, save) are shown together. The fixed model construction is <b>not divided by the herd size</b>; it is shown separately in the last table.
+Percentages compare the time per cow at the larger herd with the time per cow at the smaller herd.</p>
+{{PF_PERCOW_TABLE}}
+<figure><img src="assets/fig_perf_per_cow.png" alt="Herd-dependent time in total and per cow against herd size (log scale)">
+<figcaption><b>Figure 3.</b> Left: total herd-dependent time. Right: the same divided by the number of cows. The total grows much more slowly than the herd because the propagation and the KEEP / CULL solve are not repeated for every cow; the part that does grow with the herd
+(mapping cows to states and writing per-cow results) is visible in the monthly curve. The per-cow figure therefore falls steeply over this range (see the table). It is an amortised figure, not the cost of simulating one cow.</figcaption></figure>
+<p>{{PF_PERCOW_TEXT}}</p>
+
+<h3 id="memory">Memory and model size</h3>
+{{PF_MODEL_TABLE}}
+<figure><img src="assets/fig_perf_memory.png" alt="Peak memory by herd size and time resolution (log scale)">
+<figcaption><b>Figure 4.</b> Peak resident memory of the complete workflow (log scale). Over 1 to 10,000 cows it changed little (see the table); the resolution, which sets the number of states, mattered far more.</figcaption></figure>
+<p>{{PF_MEMORY_TEXT}}</p>
+
+<h3 id="daily">The daily-resolution limitation</h3>
+<p>{{PF_DAILY_TEXT}}</p>
+<p>{{PF_FALLBACK_TEXT}}</p>
+
+<h2 id="limitations">Limitations and how to read these numbers</h2>
+<ul>
+<li><b>Repetitions.</b> {{PF_REPS_TEXT}}</li>
+<li><b>Daily future distribution.</b> It uses <code>replacement_split(…, keep_trajectory=False)</code> instead of <code>project_herd</code>, for the reason and with the validation described <a href="#daily">above</a>.</li>
+<li><b>Herd construction.</b> {{PF_HERD_TEXT}}</li>
+<li><b>One machine, one run of the study.</b> Timings depend on the hardware and software environment (processor, memory, operating system, Python and library versions) and on what else runs on the machine.
+They are not universal performance guarantees; use them for the shape (what dominates, how it scales), and measure on your own machine for absolute times.</li>
+<li><b>Scope.</b> Only the expected-distribution workflow described above was measured. Stochastic and Monte Carlo modes, plotting, the Excel workbook and the youngstock domain were not.
+The page makes no comparison with other software.</li>
+<li><b>Fixed versus herd-dependent.</b> The end-to-end figure per cow includes the fixed model construction and is therefore not comparable between resolutions or herd sizes without the tables above.</li>
+</ul>
