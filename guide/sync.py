@@ -50,7 +50,7 @@ TOKEN_DOCS = ["guide/tutorial.html", "guide/web/content/home.html", "guide/web/c
 BUILD_TOKENS = {"CODE", "OUT", "STATS", "TR_CODE", "TR_MONTH", "TR_WEEK", "TR_DAY"}
 
 # What a built site is made from.
-SITE_SOURCES = ["src/**/*.py", "guide/build.py", "guide/sync.py", "guide/resolution_worker.py", "guide/web/build_web.py", "guide/web/content/*", "guide/web/theme/*", "guide/tutorial.html",
+SITE_SOURCES = ["src/**/*.py", "guide/build.py", "guide/sync.py", "guide/resolution_worker.py", "guide/web/build_web.py", "guide/web/performance_page.py", "guide/web/content/*", "guide/web/theme/*", "guide/tutorial.html",
                 "examples/*.py", "user_examples/README.md", "user_examples/*.ipynb", "CITATION.cff", "pyproject.toml", "README.md"]
 
 # Model sources -> what is computed from them (for ``impact`` and the output-freshness check).
