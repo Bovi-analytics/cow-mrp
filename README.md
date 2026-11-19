@@ -1,3 +1,5 @@
+![CowMRP: Markov Reward Process for Smart Dairy Management](guide/web/theme/banner_readme.png)
+
 # CowMRP (`cowmrp`)
 
 Markov reward process (MRP) models of dairy cattle, as a Python package. A **domain-free MRP engine** (`cowmrp.mrp`) plus two animal domains:
