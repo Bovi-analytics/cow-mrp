@@ -1,0 +1,150 @@
+<p class="eyebrow">First steps</p>
+<h1>Install CowMRP and run your first herd</h1>
+<p class="lead">A step-by-step guide for a first-time user: from installing Python to a projected herd and a KEEP / CULL table, with nothing assumed.</p>
+
+<div class="stats">
+<div class="stat"><b>pip</b><span>install cowmrp</span></div>
+<div class="stat"><b>3.10+</b><span>Python version</span></div>
+<div class="stat"><b>{{VERSION}}</b><span>current release</span></div>
+<div class="stat"><b>MIT</b><span>licence</span></div>
+</div>
+<p>CowMRP is on the Python Package Index (<a href="https://pypi.org/project/cowmrp/">pypi.org/project/cowmrp</a>). The steps below use the 200-cow synthetic herd that ships with the package, so you need no farm data to start. If you already know Python, the shorter <a href="getting-started.html">Getting started</a> page is enough.</p>
+
+<div class="steps">
+
+<h2 id="python">Install Python</h2>
+<p>CowMRP needs Python 3.10 or newer; it has been tested on 3.12 and 3.13. Download Python from <a href="https://www.python.org/downloads/">python.org/downloads</a>. On Windows, tick <b>Add Python to PATH</b> in the installer, then open PowerShell and check:</p>
+<p class="cap">Windows (PowerShell)</p>
+<pre><code>py --version</code></pre>
+<p class="cap">macOS / Linux</p>
+<pre><code>python3 --version</code></pre>
+<p>You should see a version number such as <code>Python 3.13.x</code>.</p>
+
+<h2 id="environment">Create a project environment</h2>
+<p>Use a separate virtual environment, so CowMRP and its libraries do not mix with other Python projects.</p>
+<p class="cap">Windows (PowerShell)</p>
+<pre><code>mkdir CowMRP_project
+cd CowMRP_project
+py -m venv .venv
+.venv\Scripts\Activate.ps1</code></pre>
+<p class="cap">macOS / Linux</p>
+<pre><code>mkdir CowMRP_project
+cd CowMRP_project
+python3 -m venv .venv
+source .venv/bin/activate</code></pre>
+<p>The prompt now starts with <code>(.venv)</code>. If PowerShell blocks the activation script, skip it and call the environment's Python directly: use <code>.venv\Scripts\python.exe</code> wherever the steps below say <code>python</code>.</p>
+
+<h2 id="install">Install CowMRP</h2>
+<pre><code>python -m pip install --upgrade pip
+python -m pip install cowmrp</code></pre>
+<p>This is the <b>basic installation</b>. It installs the package and its three required libraries (<code>numpy</code>, <code>pandas</code>, <code>scipy</code>), and it is all you need to build the models, project a herd, write CSV tables and calculate KEEP / CULL. Plots, dashboards and the Excel workbook are optional extras that you add only when you want them:</p>
+<div class="tblwrap"><table class="deps">
+<tr><th>What you want to do</th><th>Install</th><th>Needs</th></tr>
+<tr><td>Build the model, load a herd, project it, KEEP / CULL table, CSV files</td><td><code>pip install cowmrp</code></td><td><code>numpy</code>, <code>pandas</code>, <code>scipy</code></td></tr>
+<tr><td>HTML dashboards and figures</td><td><code>pip install "cowmrp[plot]"</code></td><td><code>matplotlib</code>, <code>plotly</code></td></tr>
+<tr><td>KEEP / CULL Excel workbook</td><td><code>pip install "cowmrp[excel]"</code></td><td><code>openpyxl</code></td></tr>
+<tr><td>Both extras at once</td><td><code>pip install "cowmrp[plot,excel]"</code></td><td>all of the above</td></tr>
+</table></div>
+<p>Every step below works with the basic installation, except the one marked <a href="#dashboards">optional: dashboards</a>, which says when to add the <code>plot</code> extra.</p>
+
+<h2 id="verify">Check the installation</h2>
+<pre><code>python -c "import cowmrp; print(cowmrp.__version__)"</code></pre>
+<p class="cap">Output</p>
+<pre class="out"><code>{{VERSION}}</code></pre>
+<p>Seeing the version number without an error means CowMRP is installed.</p>
+
+<h2 id="first-run">Run your first herd</h2>
+<p>Create a file named <code>first_run.py</code> in the project folder and paste this code. It builds the cow model, loads the example herd, projects it 24 steps ahead and saves the results.</p>
+<p class="cap">first_run.py</p>
+<pre><code>from cowmrp.data import example_herd_path
+from cowmrp.model import build_model
+from cowmrp.domains.cow.farm import load_herd, project_herd
+from cowmrp.viz.farm import write_farm_outputs
+
+# 1. Build the dairy cow model
+model = build_model("cow")
+
+# 2. Load the example herd (200 synthetic cows)
+herd = load_herd(example_herd_path(), model)
+
+# 3. Project the herd over 24 monthly steps
+result = project_herd(herd, model, mode="expected", steps=24)
+
+# 4. Save the result tables as CSV files (no plotting libraries needed)
+write_farm_outputs(result, "farm_results", dashboards=False)
+
+print("CowMRP run completed successfully!")</code></pre>
+<p>Run it:</p>
+<pre><code>python first_run.py</code></pre>
+<p class="cap">Output</p>
+<pre class="out"><code>3 independent variables, 0 derived variables declared.
+All {{COW_STATES}} rows sum to 1.0 (within 1e-08)
+CowMRP run completed successfully!</code></pre>
+<p>The first two lines are the model's own checks: every one of the {{COW_STATES}} states has transition probabilities that add up to one.</p>
+
+<h2 id="results">Find your results</h2>
+<p>A new folder <code>farm_results</code> appears next to the script:</p>
+<pre><code>CowMRP_project/
+  .venv/
+  first_run.py
+  farm_results/
+    distribution_summary.csv        cows by status, lactation, month in milk and stage: now and after 24 steps
+    cow_values.csv                   one row per cow: her expected values (V, V_keep, ...) and status
+    replacement_tracking_regular.csv     Dry / Open / Pregnant cows at each step: cows never replaced
+    replacement_tracking_replaced.csv    the same for cows that entered through replacement</code></pre>
+<p>The CSV files open in Excel or in Python (<code>pandas.read_csv</code>). In <code>distribution_summary.csv</code>, <code>current</code> is the number of cows in each group today and <code>predicted</code> is the expected number after 24 steps, including cows that were culled and replaced on the way.</p>
+
+<h2 id="dashboards">Optional: dashboards</h2>
+<p>To get the HTML dashboards as well, install the <code>plot</code> extra and write the outputs without <code>dashboards=False</code>. Nothing else in the script changes.</p>
+<pre><code>python -m pip install "cowmrp[plot]"</code></pre>
+<p>In <code>first_run.py</code> replace the saving line by:</p>
+<pre><code>write_farm_outputs(result, "farm_results")</code></pre>
+<p>and run the script again. Two files are added to <code>farm_results</code>: <code>dashboard.html</code> (a static dashboard) and <code>dashboard_plotly.html</code> (an interactive one). Open them in a web browser. Without the <code>plot</code> extra this call stops with a message that names the extra to install, before it writes anything.</p>
+
+<h2 id="settings">Understand the projection settings</h2>
+<pre><code>project_herd(herd, model, mode="expected", steps=24)</code></pre>
+<ul>
+<li><code>mode="expected"</code> computes the expected distribution of the herd over the states, not one random simulated history. It is exact and reproducible. <code>stochastic</code> and <code>monte_carlo</code> are separate modes that you choose explicitly.</li>
+<li><code>steps=24</code> is the number of model steps. At the default monthly resolution one step is 30 days, so 24 steps are 720 days, about two years. At weekly or daily resolution a step is shorter; see <a href="tutorial.html#units">time resolution</a>.</li>
+</ul>
+
+<h2 id="own-herd">Use your own herd</h2>
+<p>Prepare a CSV file with one row per cow:</p>
+<table>
+<tr><th>Column</th><th>Meaning</th></tr>
+<tr><td><code>cow_id</code></td><td>Cow identification, unique (optional)</td></tr>
+<tr><td><code>lactation</code></td><td>Lactation number, 1 to 10</td></tr>
+<tr><td><code>dim_days</code></td><td>Days in milk</td></tr>
+<tr><td><code>dp_days</code></td><td>Days pregnant; 0 for an open cow</td></tr>
+</table>
+<pre><code>cow_id,lactation,dim_days,dp_days
+101,1,120,0
+102,2,180,60
+103,3,240,120
+104,1,45,0</code></pre>
+<p>Then replace the example file in the script:</p>
+<pre><code>herd = load_herd("my_farm_data.csv", model)</code></pre>
+<p><code>load_herd</code> maps each cow to a model state and reports every record it cannot map, with its row and <code>cow_id</code>: missing columns, duplicate cow IDs, invalid values and combinations that do not exist in the model.</p>
+
+<h2 id="keepcull">Calculate KEEP / CULL</h2>
+<p>With a herd loaded, add:</p>
+<pre><code>from cowmrp.domains.cow.keepcull import keep_cull_table
+
+table = keep_cull_table(herd, model, years=(1, 3, 5), offer=900)
+print(table)</code></pre>
+<p>This needs only the basic installation. The table has one row per cow. For each horizon in <code>years</code> it gives <code>value_1y</code>, <code>value_3y</code> and <code>value_5y</code>: the <b>break-even sale value</b>, the offer at which keeping her and replacing her are worth the same. With an <code>offer</code> it also gives <code>decision_&lt;N&gt;y</code> (CULL when the offer is above the break-even value, otherwise KEEP), <code>stable</code> (the call is the same at every horizon) and <code>rank_longest</code> (1 is the weakest cow at the longest horizon).</p>
+<div class="warn"><b>Check the inputs before using the result.</b> The <code>offer</code> of 900 is only an illustration: replace it with the net sale offer for your cow. The default prices are US values and several are provisional; the example herd is synthetic. See <a href="defaults.html">Defaults</a> for every value, its source and how to change it for one run.</div>
+<p>To work with the same comparison in Excel, with a live sale-offer column, install the <code>excel</code> extra and see the <a href="keepcull-workbook.html">KEEP / CULL workbook</a>.</p>
+
+</div>
+
+<h2 id="next">Where to go next</h2>
+<div class="cards">
+<a class="card" href="getting-started.html"><b>Beginner: Getting started</b><span>The short version of this page, and the choice of time resolution.</span></a>
+<a class="card" href="examples.html"><b>Applied: Examples</b><span>Complete scripts and five notebooks: your cows from a CSV, farm projection, rewards, youngstock.</span></a>
+<a class="card" href="keepcull-workbook.html"><b>Applied: Excel workbook</b><span>The KEEP / CULL comparison with a live sale offer, in Excel.</span></a>
+<a class="card" href="defaults.html"><b>Applied: Defaults</b><span>Prices and costs, and which can be changed for one run.</span></a>
+<a class="card" href="tutorial.html"><b>Researcher: Tutorial</b><span>The workflow step by step, including time resolution.</span></a>
+<a class="card" href="api/index.html"><b>Researcher: API reference</b><span>Every module, class and function, for building your own domain on the engine.</span></a>
+</div>
+<p>To cite CowMRP, see <a href="cite.html">Cite</a>.</p>

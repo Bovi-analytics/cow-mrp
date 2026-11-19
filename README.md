@@ -218,7 +218,7 @@ The site is built from the code by `python guide/build.py` and published to GitH
 ## License and citation
 
 Authors: Sumit Sharma (first author, primary developer), Edward Hansen and Miel Hostens (supervisor), Department of Animal Science, Cornell University, Ithaca, New York, USA.
-CowMRP is released under the MIT licence (SPDX `MIT`), see `LICENSE`. Copyright (c) 2026 Bovi-analytics Lab, Cornell University. How to cite: see `CITATION.cff` (a Zenodo DOI will be added after the first public release).
+CowMRP is released under the MIT licence (SPDX `MIT`), see `LICENSE`. Copyright (c) 2026 Bovi-analytics Lab, Cornell University. How to cite: see `CITATION.cff` (archived release: [doi:10.5281/zenodo.24357536](https://doi.org/10.5281/zenodo.24357536)).
 
 Third-party material keeps its own licence: the Computer Modern (CMU) web fonts bundled with the documentation theme (`guide/web/theme/fonts/`, not in the installed package) are under the SIL Open Font License 1.1, whose text (`OFL.txt`) is kept with them; the interactive dashboards embed plotly.js (MIT), which keeps its own notice in the generated files. Dependencies such as numpy, pandas, scipy, matplotlib, plotly and openpyxl are installed from PyPI under their own licences and are not redistributed here.
 

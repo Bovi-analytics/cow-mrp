@@ -15,6 +15,7 @@ SINGLE SOURCES (nothing is copied by hand; rebuild and every page follows)
   CITATION.cff                              the citation page (authors, version, licence)
   src/cowmrp docstrings                     the API reference (pdoc)
   guide/assets/*.png                        saved validation figures (read, never modified)
+  theme/logo.png, theme/logo-64.png         the logo (hero image 480 px; header and favicon 64 px), tracked so a clean clone builds with it
 If an example script changes and --examples was not run, the build stops (the stored output would no longer match the code).
 """
 import contextlib
@@ -65,7 +66,7 @@ EXAMPLES = [
 ]
 QUICKSTART = os.path.join(CONTENT, "quickstart.py")
 TIME_RESOLUTION = os.path.join(CONTENT, "time_resolution.py")
-NAV = [("Home", "index.html"), ("Getting started", "getting-started.html"), ("Examples", "examples.html"), ("Tutorial", "tutorial.html"), ("Defaults", "defaults.html"),
+NAV = [("Home", "index.html"), ("First steps", "first-steps.html"), ("Getting started", "getting-started.html"), ("Examples", "examples.html"), ("Tutorial", "tutorial.html"), ("Defaults", "defaults.html"),
        ("API", "api/index.html"), ("Science", "science.html"), ("Performance", "performance.html"), ("Methods", "methods.html"), ("Provenance", "provenance.html"), ("Cite", "cite.html")]
 API_MODULES = ["cowmrp.mrp", "cowmrp.model", "cowmrp.domain", "cowmrp.io", "cowmrp.viz", "cowmrp.data", "cowmrp.domains.cow", "cowmrp.domains.youngstock"]
 # --- API pages: long module-level values --------------------------------------------------------------------------------------------------
@@ -483,7 +484,15 @@ def nologo(t):
 
 
 def prepare_logo(assets):
-    """logos/Cow_MRPlogo2.png (the original is never modified): crop the white margin, then write assets/logo.png (hero) and logo-64.png (header, favicon)."""
+    """Copy the tracked processed logos (theme/logo.png, theme/logo-64.png) to assets/. Only when they are missing are they made from
+    logos/Cow_MRPlogo2.png (git-ignored; the original is never modified): crop the white margin, then write assets/logo.png (hero) and
+    logo-64.png (header, favicon). To change the logo, delete the two tracked files, build once with the new original in logos/, and commit
+    the two files that appear in theme/."""
+    tracked = [os.path.join(THEME, n) for n in ("logo.png", "logo-64.png")]
+    if all(os.path.exists(t) for t in tracked):
+        for t in tracked:
+            shutil.copy2(t, assets)
+        return True
     from PIL import Image
     src = os.path.join(ROOT, "logos", "Cow_MRPlogo2.png")
     if not os.path.exists(src):
@@ -611,6 +620,8 @@ def build_pages(nums):
                "TR_CODE": code_block(read(TIME_RESOLUTION)), **{"TR_" + u.upper(): code_block(read(os.path.join(OUT, f"time-resolution-{u}.txt")), "out") for u in sync.RESOLUTIONS}})
     pages["getting-started.html"] = page("Getting started", gs, "Getting started", "Install cowmrp and run a whole farm.")
 
+    pages["first-steps.html"] = page("First steps", first_steps_body(), "First steps", "Install Python and CowMRP, run the example herd, use your own herd and calculate KEEP / CULL, step by step.")
+
     ex = ['<p class="eyebrow">Examples</p><h1>Examples</h1>'
           '<p class="lead">Five notebooks to start from (with a download link for the whole <code>user_examples/</code> folder), then four complete scripts from the <code>examples/</code> folder. For the scripts, the code is the file itself and the output is what it printed when the site was built.</p>',
           fill(read(os.path.join(CONTENT, "notebooks.html")), {"REPO_URL": repo_url(), "NOTEBOOK_ROWS": notebook_rows_html(repo_url())})]
@@ -649,6 +660,11 @@ def defaults_body():
     return sync.fill_tokens(read(os.path.join(CONTENT, "defaults.html")))
 
 
+def first_steps_body():
+    """The first-time-user guide: hand-written steps (content/first-steps.html); the version and model size come from the package."""
+    return sync.fill_tokens(read(os.path.join(CONTENT, "first-steps.html")))
+
+
 def performance_body():
     """The performance page: hand-written explanation plus tables, sentences and figures generated from content/performance_data.json (guide/web/performance_page.py)."""
     sys.path.insert(0, WEB)
@@ -673,15 +689,16 @@ def cite_body():
     ver = re.search(r"^version:\s*(\S+)", cff, flags=re.M).group(1)
     lic = re.search(r"^license:\s*(\S+)", cff, flags=re.M).group(1)
     repo = re.search(r'^repository-code:\s*"(.*)"', cff, flags=re.M).group(1)
+    doi = re.search(r"^doi:\s*(\S+)", cff, flags=re.M).group(1)          # the archived release (Zenodo); CITATION.cff is the one source
     authors = re.findall(r"family-names:\s*(.+)\n\s+given-names:\s*(.+)\n(?:\s+affiliation:\s*\"(.+)\")?", cff)
     year = re.search(r"Copyright \(c\) (\d{4})", read(os.path.join(ROOT, "README.md"))).group(1)
     names = " and ".join(f"{f}, {g}" for f, g, _ in authors)
     plain = ", ".join(f"{f}, {g[0]}." for f, g, _ in authors)
     aff = "".join((f"<li>{esc(g)} {esc(f)}: {esc(a)}</li>" if a else f"<li>{esc(g)} {esc(f)}</li>") for f, g, a in authors)
     key = authors[0][0].lower() + "_cowmrp_" + year
-    bib = (f"@software{{{key},\n  author  = {{{names}}},\n  title   = {{{title}}},\n  year    = {{{year}}},\n  version = {{{ver}}},\n  url     = {{{repo}}}\n}}")
+    bib = (f"@software{{{key},\n  author  = {{{names}}},\n  title   = {{{title}}},\n  year    = {{{year}}},\n  version = {{{ver}}},\n  doi     = {{{doi}}},\n  url     = {{{repo}}}\n}}")
     return (f'<p class="eyebrow">Citation and licence</p><h1>Cite CowMRP</h1>'
-            f'<p class="lead">If you use the package in your work, please cite it. A DOI will be added after the first public release.</p>'
+            f'<p class="lead">If you use the package in your work, please cite it. Archived release: <a href="https://doi.org/{doi}">doi:{doi}</a>.</p>'
             f'<h2 id="cite">Citation</h2><p>{esc(plain)} ({year}). <i>{esc(title)}</i> (version {esc(ver)}). {esc(repo)}</p>'
             f'<p class="cap">BibTeX</p>{code_block(bib)}<p>The same information is in <code>CITATION.cff</code> in the source repository, which GitHub and reference managers read directly.</p>'
             f'<h2 id="authors">Authors</h2><ul>{aff}</ul>'
@@ -753,9 +770,9 @@ def main():
             if fn.endswith(".png"):
                 shutil.copy2(os.path.join(src, fn), assets)
     global HAS_LOGO
-    HAS_LOGO = prepare_logo(assets)                                  # logos/ is kept out of the repository: no logo, a plain text brand
+    HAS_LOGO = prepare_logo(assets)                                  # the tracked theme/logo*.png; logos/ (the original) is git-ignored
     if not HAS_LOGO:
-        print("note: logos/Cow_MRPlogo2.png not found -- building the site without a logo")
+        print("note: no logo (theme/logo.png, theme/logo-64.png, or logos/Cow_MRPlogo2.png) -- building the site without a logo")
     pages = build_pages(nums)
     for name, h in pages.items():
         write(os.path.join(SITE, name), nologo(h))

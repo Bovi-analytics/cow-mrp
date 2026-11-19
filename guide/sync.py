@@ -165,7 +165,7 @@ def facts():
         rew_rows.append((spec["name"], "+" if spec["sign"] > 0 else "-", _first_sentence(mod.__doc__) if mod else ""))
     from cowmrp.domains.cow.parameters import TIME_UNIT
     _FACTS = {
-        "TIME_UNIT": TIME_UNIT, "COW_STATES": f"{len(c.states):,}", "COW_REACHABLE": f"{reach:,}", "COW_NNZ": f"{c.P.nnz:,}",
+        "VERSION": __import__("cowmrp").__version__, "TIME_UNIT": TIME_UNIT, "COW_STATES": f"{len(c.states):,}", "COW_REACHABLE": f"{reach:,}", "COW_NNZ": f"{c.P.nnz:,}",
         "CO_STATES": f"{len(c.states):,}", "CO_NNZ": f"{c.P.nnz:,}", "YS_STATES": f"{len(y.states):,}", "YS_NNZ": f"{y.P.nnz:,}",   # CO_* are the names the site content already uses
         "_econ_rows": econ_rows, "_reward_rows": rew_rows,
     }

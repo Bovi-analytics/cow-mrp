@@ -1,4 +1,4 @@
-# Citation metadata. ORCIDs, funding, the release date and the DOI are added when available.
+# Citation metadata. ORCIDs, funding and the release date are added when available.
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata in this file."
 title: "cowmrp: Markov reward process models of dairy cattle"
@@ -9,6 +9,7 @@ abstract: >-
 type: software
 version: 0.1.0
 license: MIT
+doi: 10.5281/zenodo.24357536
 repository-code: "https://github.com/Bovi-analytics/cow-mrp"
 url: "https://bovi-analytics.github.io/cow-mrp/"
 keywords:

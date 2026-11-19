@@ -70,6 +70,7 @@ th,td{border-bottom:1px solid var(--line);padding:.5em .65em;text-align:left;ver
 th{color:var(--mut);font-size:.76rem;text-transform:uppercase;letter-spacing:.06em;background:var(--soft)}
 td.n{text-align:right;font-variant-numeric:tabular-nums}
 .tblwrap{overflow-x:auto}
+table.deps{min-width:34rem}
 figure{margin:1.6em 0}
 figure img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff;display:block}
 figcaption{color:var(--mut);font-size:.88rem;margin-top:.45em;max-width:74ch}
@@ -88,6 +89,10 @@ figcaption{color:var(--mut);font-size:.88rem;margin-top:.45em;max-width:74ch}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:14px;margin:1.6em 0 .6em;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .stat b{display:block;font-size:1.65rem;color:var(--fg);line-height:1.1;font-variant-numeric:tabular-nums}
 .stat span{font-size:.84rem;color:var(--mut)}
+.steps{counter-reset:step}
+.steps>h2{counter-increment:step;display:flex;align-items:center;gap:.65rem}
+.steps>h2::before{content:counter(step);flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.9rem;height:1.9rem;border-radius:50%;background:var(--acc);color:var(--bg);font:700 .95rem/1 var(--serif)}
+.steps>h2+p.cap,.steps>p.cap:first-of-type{margin-top:1em}
 .stat.multi{grid-column:span 2}
 .stat.multi .lab{display:block;margin-bottom:4px}
 .trio{display:flex;gap:18px;flex-wrap:wrap}

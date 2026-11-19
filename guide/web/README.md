@@ -15,6 +15,7 @@ Needs `pip install -r guide/requirements-docs.txt` and the `plot` extra (matplot
 | `content/*.html` | home, getting started, science text (model sizes are filled in from the built models) |
 | `CITATION.cff` | the citation page |
 | the five `*_METHOD_INFO` dictionaries | the Methods page (`methods.html`), read from the package at build time; `check_methods.py` checks that every key and value is on the page and that each long API value is hidden or kept by an explicit list (`HIDE_VALUES`, `KEEP_VALUES` in `build_web.py`) |
+| `content/first-steps.html` | the First steps page for a first-time user: hand-written steps with a dependency table; the version and model size are tokens read from the package. Also built into `guide/site/` by `guide/build.py` |
 | `content/performance.html`, `content/performance_data.json`, `performance_page.py` | the Performance page: hand-written explanation, plus tables, sentences and four figures generated from the measured values in the data file (no number is typed in the text); the build stops if the data's model sizes differ from the package's. The page is also built into `guide/site/` by `guide/build.py` |
 | `src/cowmrp` docstrings | the API reference (pdoc) |
 | `theme/web.css`, `theme/web.js` | the one stylesheet and script (light/dark, copy buttons, outline, search) |
