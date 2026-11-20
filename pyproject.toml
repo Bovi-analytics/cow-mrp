@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cowmrp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Markov reward process (MRP) models of dairy cattle: a domain-free MRP engine with cow and youngstock domains"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = "Apache-2.0"
 license-files = ["LICENSE"]
 # Author order (first author and primary developer, then supervisor) is the same in CITATION.cff and .zenodo.json. PEP 621 has no affiliation or ORCID field:
 # the affiliation (Department of Animal Science, Cornell University, Ithaca, New York, USA) and the ORCIDs (pending) are kept in CITATION.cff and .zenodo.json.

@@ -7,8 +7,8 @@ abstract: >-
   (state: lactation, days in milk, days pregnant) and a youngstock domain. It values cows (keep or replace), projects a herd
   forward with the expected distribution, stochastic paths or Monte Carlo, and reports environmental outputs beside economic ones.
 type: software
-version: 0.1.0
-license: MIT
+version: 0.1.1
+license: Apache-2.0
 doi: 10.5281/zenodo.24357536
 repository-code: "https://github.com/Bovi-analytics/cow-mrp"
 url: "https://bovi-analytics.github.io/cow-mrp/"

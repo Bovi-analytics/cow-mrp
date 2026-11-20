@@ -72,7 +72,7 @@ SECTIONS = [
 OVERRIDES = {}
 OTHER_FILES = [
     ("README.md", "Entry point: install, quick start, farm data, time resolution, the commands to run."),
-    ("LICENSE", "The MIT licence."),
+    ("LICENSE", "The Apache License 2.0."),
     ("pyproject.toml", "Package metadata, dependencies (extras: plot, excel, parquet, bench, notebook, dev) and test settings."),
     ("tests/", "Fast default suite plus opt-in slow and install tests; tests/README.md explains them; baselines/ holds the saved reference numbers."),
     ("runners/_shared/notebook/mrp_engine.ipynb", "The notebook runner, shared by every domain (domain from MRP_DOMAIN; DOMAIN='cow' for the cow)."),

@@ -541,7 +541,7 @@ def header(prefix, active):
 
 
 FOOTER = ('<footer class="site">CowMRP {ver} &middot; static site built from the package source by <code>guide/web/build_web.py</code>; no tracking, no cookies. '
-          'Licence MIT.</footer>')
+          'Licence Apache-2.0.</footer>')
 THEME_INIT = '<script>try{var t=localStorage.getItem("cowmrp-theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>'
 
 

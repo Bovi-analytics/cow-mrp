@@ -3,7 +3,7 @@
 ``example_herd_path()``      the 200-cow herd in the model's own schema (cow_id, state_id, lactation, uim, up, dim_days, dp_days, status),
                              made with the package's own generator (``generate_herd``, equilibrium mode, seed 42, month resolution)
 ``example_raw_herd_path()``  the same cows as a farmer would export them: cow_id, lactation, dim_days, dp_days only
-Both are synthetic: cows drawn from the model's steady-state herd, MIT like the package.
+Both are synthetic: cows drawn from the model's steady-state herd, Apache-2.0 like the package.
 """
 import os
 
