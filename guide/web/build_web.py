@@ -533,11 +533,20 @@ def version():
         return ""
 
 
+# The header has two rows: the primary links sit in the bar beside the brand, the secondary (reference) links in the row below it.
+# A new page is added to NAV; it goes to the second row when its name is listed here, otherwise to the first.
+NAV_SECONDARY = ("API", "Science", "Performance", "Methods", "Provenance", "Cite")
+
+
 def header(prefix, active):
-    links = "".join(f'<a href="{prefix}{href}"{" class=on" if name == active else ""}>{name}</a>' for name, href in NAV)
+    def row(items):
+        return "".join(f'<a href="{prefix}{href}"{" class=on" if name == active else ""}>{name}</a>' for name, href in items)
+    links = row([n for n in NAV if n[0] not in NAV_SECONDARY])
+    links2 = row([n for n in NAV if n[0] in NAV_SECONDARY])
     return (f'<div class="site-header" role="banner"><div class="bar"><a class="brand" href="{prefix}index.html"><img class="logo" src="{prefix}assets/logo-64.png" alt="" width="30" height="30"><span class="bt">Cow<b>MRP</b></span></a>'
             f'<div class="nav">{links}</div><div class="tools"><input id="q" type="search" placeholder="Search" autocomplete="off" aria-label="Search the site" data-base="{prefix}">'
-            f'<button id="theme" type="button" title="Light / dark">Theme</button></div></div><div id="results" class="results"></div></div>')
+            f'<button id="theme" type="button" title="Light / dark">Theme</button></div></div>'
+            f'<div class="sub"><div class="bar2"><div class="nav">{links2}</div></div></div><div id="results" class="results"></div></div>')
 
 
 FOOTER = ('<footer class="site">CowMRP {ver} &middot; static site built from the package source by <code>guide/web/build_web.py</code>; no tracking, no cookies. '

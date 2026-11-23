@@ -11,12 +11,14 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#14181b;--fg:#e3e6e8;--mut:#9aa4ac;--line:#2c3338;--acc:#7cc29a;--acc2:#9bd5b2;--soft:#1a2022;--code:#1f262a;--warn:#2a2514;--hdr:rgba(20,24,27,.94);--shadow:none}}
 :root[data-theme=dark]{--bg:#14181b;--fg:#e3e6e8;--mut:#9aa4ac;--line:#2c3338;--acc:#7cc29a;--acc2:#9bd5b2;--soft:#1a2022;--code:#1f262a;--warn:#2a2514;--hdr:rgba(20,24,27,.94);--shadow:none}
 *{box-sizing:border-box}
-html{scroll-behavior:auto;scroll-padding-top:72px}
+html{scroll-behavior:auto;scroll-padding-top:calc(var(--hh) + 15px)}
 body{margin:0;background:var(--bg);color:var(--fg);font:19px/1.62 var(--serif)}
 a{color:var(--acc);text-decoration:none}a:hover{text-decoration:underline}
 code,pre,kbd{font-family:var(--mono)}
 
 /* header */
+/* Two rows: the bar (brand, primary links, search, theme) and the secondary row (.sub). --hh is the full header height; every sticky offset below uses it. */
+:root{--hh:93px}
 .site-header{position:sticky;top:0;z-index:50;background:var(--hdr);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
 .bar{max-width:1240px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;gap:20px}
 .brand{font-weight:700;font-size:1.08rem;color:var(--fg);letter-spacing:.01em;white-space:nowrap}
@@ -29,6 +31,11 @@ code,pre,kbd{font-family:var(--mono)}
 .nav a{color:var(--mut);padding:6px 9px;border-radius:6px;font-size:1rem;white-space:nowrap}
 .nav a:hover{color:var(--fg);background:var(--soft);text-decoration:none}
 .nav a.on{color:var(--acc);font-weight:600}
+.sub{border-top:1px solid var(--line)}
+.sub .bar2{max-width:1240px;margin:0 auto;padding:0 20px;height:35px;display:flex;align-items:center}
+.sub .nav{margin-left:-9px}
+.sub .nav a{font-size:.94rem}
+@media (max-width:640px){.sub .bar2{padding:0 12px}.sub .nav{margin-left:-6px}}
 .tools{display:flex;align-items:center;gap:8px;margin-left:auto}
 #q{width:120px;font:inherit;font-size:.95rem;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
 #q:focus{outline:2px solid var(--acc);outline-offset:0}
@@ -44,7 +51,7 @@ code,pre,kbd{font-family:var(--mono)}
 .page.wide{grid-template-columns:minmax(0,1fr)}
 article{min-width:0;max-width:780px}
 .page.wide article{max-width:none}
-.outline{position:sticky;top:76px;align-self:start;font-size:.86rem;max-height:calc(100vh - 100px);overflow:auto;border-left:1px solid var(--line);padding-left:14px}
+.outline{position:sticky;top:calc(var(--hh) + 19px);align-self:start;font-size:.86rem;max-height:calc(100vh - var(--hh) - 43px);overflow:auto;border-left:1px solid var(--line);padding-left:14px}
 .outline b{display:block;color:var(--mut);font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
 .outline a{display:block;color:var(--mut);padding:3px 0;line-height:1.35}
 .outline a:hover,.outline a.cur{color:var(--acc);text-decoration:none}
@@ -110,8 +117,11 @@ footer.site a{color:var(--mut);text-decoration:underline}
 
 /* API reference (pdoc output): keep pdoc's own layout, add the site bar above it */
 body.api-page{padding-top:0}
-body.api-page nav.pdoc{top:57px;height:calc(100vh - 57px)}
+body.api-page nav.pdoc{top:var(--hh);height:calc(100vh - var(--hh))}
 body.api-page .site-header{position:sticky}
+/* pdoc sets html,body to height:100% (the sticky header would release after one screen) and scroll-margin:2rem (anchor targets would land under a taller header) */
+body.api-page{height:auto}
+body.api-page .pdoc *{scroll-margin-top:calc(var(--hh) + 16px)}
 body.api-page main.pdoc{margin-top:0}
 .pdoc .hidden-note{color:var(--mut);font-style:italic;font-size:.85em}
 
